@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="NavalBattle:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/NavalBattle_jar</output-path>
+    <root id="archive" name="NavalBattle.jar">
+      <element id="module-output" name="NavalBattle" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jline/jansi-3.26.3-SNAPSHOT.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jline/jline-3.26.3-SNAPSHOT.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
