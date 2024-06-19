@@ -1,10 +1,10 @@
 package NavalBattleGameViewer.UI.UIelements;
 
-import NavalBattleGameViewer.UI.UIelement;
+import NavalBattleGameViewer.UI.UIElement;
 import NavalBattleGameViewer.UI.UIevents;
 import NavalBattleGameViewer.UI.UIstate;
 
-public class TextBlock extends UIelement {
+public class TextBlock extends UIElement {
 
     public TextBlock(String text, int width, int height) {
         super(width, height);

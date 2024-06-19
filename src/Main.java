@@ -8,7 +8,10 @@ public class Main {
         NavalBattleGame navalBattle = new NavalBattleGame();
         NavalBattleGameConsoleViewer navalBattleViewer = new NavalBattleGameConsoleViewer(navalBattle, 100, 25);
 
-        navalBattleViewer.viewGame();
+        navalBattleViewer.processGame();
+
+        navalBattleViewer.closeViewer();
+        navalBattle.StopStateMachine();
     }
 
 }

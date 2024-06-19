@@ -14,8 +14,12 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
     }
 
     @Override
+    public void StopStateMachine() {
+        this.stopScheduler();
+    }
+
+    @Override
     protected void onStateChange(GameState newState) {
-//        System.out.println("GameStateMachine.Game state changed.");
     }
 
     @Override
@@ -23,7 +27,7 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
         addNewTransitionToTable(GameState.Intro, GameEvent.IntroEnded, GameState.MainMenu);
 
         addNewTransitionToTable(GameState.MainMenu, GameEvent.SingleplayerGameStarted, GameState.Game);
-        addNewTransitionToTable(GameState.MainMenu, GameEvent.SettingsMenuOpened, GameState.SettingsMenu);
+        addNewTransitionToTable(GameState.MainMenu, GameEvent.MultiplayerGameStarted, GameState.Game);
         addNewTransitionToTable(GameState.MainMenu, GameEvent.GameExited, GameState.Exit);
 
         addNewTransitionToTable(GameState.Game, GameEvent.GamePaused, GameState.Pause);
@@ -34,6 +38,5 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
 
     @Override
     protected void handleInvalidEvent(GameEvent event) {
-//        System.out.println("Invalid event!");
     }
 }

@@ -3,9 +3,14 @@ package NavalBattleGameViewer.UI;
 import NavalBattleGameViewer.Coord2D;
 import StateMachine.StateMachine;
 
-public abstract class UIelement extends StateMachine<UIstate, UIevents> {
+public abstract class UIElement extends StateMachine<UIstate, UIevents> {
 
-    public UIelement(int width, int height) {
+    @Override
+    public void StopStateMachine() {
+        this.stopScheduler();
+    }
+
+    public UIElement(int width, int height) {
         super(UIstate.Default);
         this.width = width;
         this.height = height;

@@ -14,9 +14,11 @@ public abstract class StateMachine<S extends Enum<S>, E extends Enum<E>> {
         initTransitionTable();
     }
 
+    // Обязательно к вызову перед завершением работы машины состояний
+    public abstract void StopStateMachine();
+
     public void processEvent(E event) {
-        if (transitionTable.containsKey(currentState) &&
-                transitionTable.get(currentState).containsKey(event)) {
+        if (transitionTable.containsKey(currentState) && transitionTable.get(currentState).containsKey(event)) {
             currentState = transitionTable.get(currentState).get(event);
             onStateChange(currentState);
         } else {
@@ -30,7 +32,7 @@ public abstract class StateMachine<S extends Enum<S>, E extends Enum<E>> {
             processEvent(event);
         }, delay, unit);
     }
-    // Метод для остановки таймера
+    // Метод для остановки таймера. Надо вызывать при закрытии машины состояний
     public void stopScheduler() {
         scheduler.shutdown();
     }

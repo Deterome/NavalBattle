@@ -1,14 +1,12 @@
 package NavalBattleGameViewer.UI.UIelements;
 
-import NavalBattleGameViewer.UI.UIelement;
+import NavalBattleGameViewer.UI.UIElement;
 import NavalBattleGameViewer.UI.UIevents;
 import NavalBattleGameViewer.UI.UIstate;
-import org.w3c.dom.events.EventTarget;
 
 import java.util.ArrayList;
-import java.util.EventListener;
 
-public class Button extends UIelement {
+public class Button extends UIElement {
 
     public Button(String buttonText, int width, int height) {
         super(width, height);

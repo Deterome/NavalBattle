@@ -2,60 +2,106 @@ package NavalBattleGameViewer;
 
 import NavalBattleGame.GameEnums.GameState;
 import NavalBattleGame.NavalBattleGame;
-import NavalBattleGameViewer.UI.UIelements.Button;
-import NavalBattleGameViewer.UI.UIelements.TextBlock;
-import NavalBattleGameViewer.UI.UIstate;
-import NavalBattleGameViewer.UI.UItemplates.MainMenu;
+import NavalBattleGameViewer.UI.Canvas;
+import NavalBattleGameViewer.UI.ConsoleUI.UItemplates.ConsoleIntro;
+import NavalBattleGameViewer.UI.Printable;
+import NavalBattleGameViewer.UI.ConsoleUI.UItemplates.ConsoleMainMenu;
+import NavalBattleGameViewer.UI.UIElement;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.InfoCmp;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class NavalBattleGameConsoleViewer {
 
     public NavalBattleGameConsoleViewer(NavalBattleGame game, int width, int height) {
         this.game = game;
-        mainMenu = new MainMenu(game);
+
+        this.views.put(GameState.MainMenu, new ConsoleMainMenu(game));
+        this.views.put(GameState.Intro, new ConsoleIntro());
+
         viewerSize.x = width;
         viewerSize.y = height;
 
         try {
-            terminal = TerminalBuilder.builder().system(true).build();
-            terminal.puts(InfoCmp.Capability.cursor_invisible);
-            terminal.flush();
+            initTerminal();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         clearOutputBuffer();
+        clearScreen();
     }
 
-    public void viewGame() {
-        while (game.getCurrentState() != GameState.Exit) {
+    public void closeViewer() {
+        for (var view: views.values()) {
+            for (var uiElement: view.getUIElementsList()) {
+                uiElement.StopStateMachine();
+            }
+        }
+    }
 
-            if (game.getCurrentState() == GameState.MainMenu) {
-                for (var uiElement : mainMenu.getUIelements()) {
+    public void processGame() {
+        while (game.getCurrentState() != GameState.Exit) {
+            var currentView = views.get(game.getCurrentState());
+            if (currentView == null) {
+                addTextToBuffer("There is no view with current state");
+                redisplay();
+                return;
+            }
+
+            ArrayList<UIElement> elementsList = currentView.getUIElementsList();
+            for (UIElement uiElement : elementsList) {
+                if (uiElement instanceof Printable) {
                     var elementPos = uiElement.getPosition();
                     setBufferCarriagePosition(elementPos.x , elementPos.y);
 
-                    if (uiElement instanceof Button) {
-                        if (uiElement.getCurrentState() == UIstate.Hover) {
-                            setBufferCarriagePosition(elementPos.x - 2, elementPos.y);
-                            addTextToBuffer("# ");
-                        }
-                        addTextToBuffer(((Button) uiElement).getButtonText());
-                    } else if (uiElement instanceof TextBlock) {
-                        addTextToBuffer(((TextBlock) uiElement).getText());
-                    }
+                    addTextToBuffer(((Printable) uiElement).getPrintableStringOfElement());
                 }
             }
+            redisplay();
 
-            setTerminalCarriagePosition(0,0);
-            outputInConsole();
-            clearOutputBuffer();
+            if (currentView instanceof InputListener) {
+                ((InputListener) currentView).onInput(processInput());
+            }
         }
 
+        try {
+            closeTerminal();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void initTerminal() throws IOException {
+        terminal = TerminalBuilder.builder().system(true).build();
+        terminal.puts(InfoCmp.Capability.cursor_invisible);
+        terminal.flush();
+
+        lineReader = LineReaderBuilder.builder().terminal(terminal).build();
+    }
+
+    private void closeTerminal() throws IOException {
+        this.terminal.close();
+    }
+
+    private void redisplay() {
+        setTerminalCarriagePosition(0,0);
+        outputInConsole();
+        clearOutputBuffer();
+    }
+
+    private String processInput() {
+        return lineReader.readLine();
+    }
+
+    void clearScreen() {
+        terminal.writer().print("\033[2J");
     }
 
     void outputInConsole() {
@@ -88,7 +134,11 @@ public class NavalBattleGameConsoleViewer {
     Coord2D viewerSize = new Coord2D();
 
     NavalBattleGame game;
-    MainMenu mainMenu;
+    HashMap<GameState, Canvas<?>> views = new HashMap<>();
 
     Terminal terminal;
+    LineReader lineReader;
+
+    ArrayList<java.util.EventListener> listeners = new ArrayList<>();
+
 }
