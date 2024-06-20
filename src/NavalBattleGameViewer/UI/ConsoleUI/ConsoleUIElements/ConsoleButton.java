@@ -11,7 +11,7 @@ public class ConsoleButton extends Button implements Printable {
     }
 
     @Override
-    public String getPrintableStringOfElement() {
+    public String getPrintableString() {
         String outputString = "";
         outputString += this.getButtonText();
         if (this.getCurrentState() == UIstate.Hover) {

@@ -1,8 +1,8 @@
 package NavalBattleGame.GameElements;
 
-public class Sea {
+public class SeaField {
 
-    public Sea(int seaWidth, int seaHeight) {
+    public SeaField(int seaWidth, int seaHeight) {
         this.seaTable = new SeaCellInfo[seaWidth][seaHeight];
     }
 

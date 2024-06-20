@@ -1,15 +1,17 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates;
 
 import NavalBattleGameViewer.UI.Canvas;
+import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleTextBlock;
 
 enum IntroElements {
     IntroText
 }
 
-public class ConsoleIntro extends Canvas<IntroElements> {
+public class ConsoleIntro extends ConsoleCanvas<IntroElements> {
 
-    public ConsoleIntro() {
+    public ConsoleIntro(int width, int height) {
+        super(width, height);
         initializeUIElements();
     }
     private void initializeUIElements() {

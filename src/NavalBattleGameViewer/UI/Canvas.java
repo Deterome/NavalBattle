@@ -1,11 +1,18 @@
 package NavalBattleGameViewer.UI;
 
+import NavalBattleGameViewer.Coord2D;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
 public abstract class Canvas<E extends Enum<E>> {
+
+    public Canvas(int width, int height) {
+        this.canvasSize.x = width;
+        this.canvasSize.y = height;
+    }
 
     public void setFocus(E element) {
         if (focusableElementsMap.containsKey(element)) {
@@ -15,6 +22,10 @@ public abstract class Canvas<E extends Enum<E>> {
             focusedElement = element;
             this.focusableElementsMap.get(focusedElement).processEvent(UIevents.EnteredArea);
         }
+    }
+
+    public void clearFocus() {
+        this.focusableElementsMap.get(focusedElement).processEvent(UIevents.ExitedArea);
     }
 
     public ArrayList<UIElement> getUIElementsList() {
@@ -41,5 +52,7 @@ public abstract class Canvas<E extends Enum<E>> {
 
     protected HashMap<E, UIElement> UIElementsMap = new HashMap<>();
     protected HashMap<E, UIElement> focusableElementsMap = new HashMap<>();
+
+    protected Coord2D canvasSize = new Coord2D();
 
 }

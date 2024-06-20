@@ -2,11 +2,11 @@ package NavalBattleGame.GameEnums;
 
 public enum GameEvent {
     IntroEnded,
-    SingleplayerGameStarted,
-    MultiplayerGameStarted,
-    GameContinues,
-    GamePaused,
-    GameEnded,
+    PlayerNameEntered,
+    RoundCreated,
+    JoinMenuOpened,
+    BackToMenu,
+    RoundEnded,
     SettingsMenuOpened,
     GameExited
 

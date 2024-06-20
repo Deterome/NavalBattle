@@ -10,7 +10,7 @@ public class ConsoleTextBlock extends TextBlock implements Printable {
     }
 
     @Override
-    public String getPrintableStringOfElement() {
+    public String getPrintableString() {
         return this.getText();
     }
 }

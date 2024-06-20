@@ -1,7 +1,7 @@
 package NavalBattleGameViewer.UI;
 
-public interface Printable {
+public interface  Printable {
 
-    String getPrintableStringOfElement();
+    String getPrintableString();
 
 }

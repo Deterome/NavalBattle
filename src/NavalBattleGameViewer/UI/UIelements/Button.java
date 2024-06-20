@@ -15,7 +15,7 @@ public class Button extends UIElement {
 
     @Override
     protected void onStateChange(UIstate newState) {
-        if (currentState == UIstate.Active) {
+        if (newState == UIstate.Active) {
             this.onButtonPressed();
         }
     }

@@ -6,7 +6,7 @@ import StateMachine.StateMachine;
 public abstract class UIElement extends StateMachine<UIstate, UIevents> {
 
     @Override
-    public void StopStateMachine() {
+    public void stopStateMachine() {
         this.stopScheduler();
     }
 

@@ -6,12 +6,12 @@ public class Main {
     public static void main(String[] args) {
 
         NavalBattleGame navalBattle = new NavalBattleGame();
-        NavalBattleGameConsoleViewer navalBattleViewer = new NavalBattleGameConsoleViewer(navalBattle, 100, 25);
+        NavalBattleGameConsoleViewer navalBattleViewer = new NavalBattleGameConsoleViewer(navalBattle, 120, 25);
 
         navalBattleViewer.processGame();
 
         navalBattleViewer.closeViewer();
-        navalBattle.StopStateMachine();
+        navalBattle.stopStateMachine();
     }
 
 }

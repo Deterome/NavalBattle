@@ -3,10 +3,10 @@ package NavalBattleGame.GameEnums;
 public enum GameState {
 
     Intro,
+    SetPlayerName,
     MainMenu,
-    Game,
-    GameOver,
-    Pause,
+    JoinToRoundMenu,
+    Round,
     SettingsMenu,
     Exit
 

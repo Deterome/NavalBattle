@@ -3,48 +3,50 @@ package NavalBattleGameViewer.UI.ConsoleUI.UItemplates;
 import NavalBattleGame.GameEnums.GameEvent;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.InputListener;
-import NavalBattleGameViewer.UI.Canvas;
+import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleButton;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleTextBlock;
-import NavalBattleGameViewer.UI.UIElement;
 import NavalBattleGameViewer.UI.UIevents;
 
 enum MainMenuElements {
     Title,
-    SpButton,
-    MpButton,
+    StartButton,
+    JoinButton,
     ExitButton,
-    InfoText
+    InfoText,
+    PlayerName
 }
 
-public class ConsoleMainMenu extends Canvas<MainMenuElements> implements InputListener {
+public class ConsoleMainMenu extends ConsoleCanvas<MainMenuElements> implements InputListener {
 
-    public ConsoleMainMenu(NavalBattleGame navalBattle) {
-        initializeUIElements(navalBattle);
+    public ConsoleMainMenu(NavalBattleGame navalBattle, int width, int height) {
+        super(width, height);
+        this.navalBattle = navalBattle;
+        initializeUIElements();
     }
 
-    private void initializeUIElements(NavalBattleGame navalBattle) {
-        var title = new ConsoleTextBlock("NAVAL BATTLE", 50, 10);
+    private void initializeUIElements() {
+        var title = new ConsoleTextBlock("NAVAL BATTLE", 10, 1);
         title.setPosition(50, 13);
         UIElementsMap.put(MainMenuElements.Title, title);
 
-        var spButton = new ConsoleButton("Singleplayer [sp]", 50,10);
-        spButton.addListener(() -> {
-            navalBattle.processEvent(GameEvent.SingleplayerGameStarted);
+        var startButton = new ConsoleButton("Start new round [start]", 10,1);
+        startButton.addListener(() -> {
+            navalBattle.processEvent(GameEvent.RoundCreated);
         });
-        spButton.setPosition(50, 15);
-        UIElementsMap.put(MainMenuElements.SpButton, spButton);
-        focusableElementsMap.put(MainMenuElements.SpButton, spButton);
+        startButton.setPosition(50, 15);
+        UIElementsMap.put(MainMenuElements.StartButton, startButton);
+        focusableElementsMap.put(MainMenuElements.StartButton, startButton);
 
-        var mpButton = new ConsoleButton("Multiplayer [mp]", 50,10);
-        mpButton.addListener(() -> {
-            navalBattle.processEvent(GameEvent.MultiplayerGameStarted);
+        var joinButton = new ConsoleButton("Join to round [join]", 10,1);
+        joinButton.addListener(() -> {
+            navalBattle.processEvent(GameEvent.JoinMenuOpened);
         });
-        mpButton.setPosition(50, 16);
-        UIElementsMap.put(MainMenuElements.MpButton, mpButton);
-        focusableElementsMap.put(MainMenuElements.MpButton, mpButton);
+        joinButton.setPosition(50, 16);
+        UIElementsMap.put(MainMenuElements.JoinButton, joinButton);
+        focusableElementsMap.put(MainMenuElements.JoinButton, joinButton);
 
-        var exitButton = new ConsoleButton("Exit [exit]", 50,10);
+        var exitButton = new ConsoleButton("Exit [exit]", 10,1);
         exitButton.addListener(() -> {
             navalBattle.processEvent(GameEvent.GameExited);
         });
@@ -52,25 +54,41 @@ public class ConsoleMainMenu extends Canvas<MainMenuElements> implements InputLi
         UIElementsMap.put(MainMenuElements.ExitButton, exitButton);
         focusableElementsMap.put(MainMenuElements.ExitButton, exitButton);
 
-        var infoText = new ConsoleTextBlock("Enter word from square brackets of the desired button", 50,10);
+        var infoText = new ConsoleTextBlock("Enter word from square brackets of the desired button", 10,1);
         infoText.setPosition(0, 0);
         UIElementsMap.put(MainMenuElements.InfoText, infoText);
+
+        var playerName = new ConsoleTextBlock("Player: NONAME", 10, 1);
+        playerName.setPosition(95,0);
+
+        UIElementsMap.put(MainMenuElements.PlayerName, playerName);
     }
 
     @Override
     public void onInput(String enteredText) {
-        if ("mp".equals(enteredText)) {
-            pressButton(MainMenuElements.MpButton);
-        } else if ("sp".equals(enteredText)) {
-            pressButton(MainMenuElements.SpButton);
+        if ("start".equals(enteredText)) {
+            pressButton(MainMenuElements.StartButton);
         } else if ("exit".equals(enteredText)) {
             pressButton(MainMenuElements.ExitButton);
+        } else if ("join".equals(enteredText)) {
+            pressButton(MainMenuElements.JoinButton);
         }
+    }
+
+    @Override
+    public String getPrintableString() {
+        ((ConsoleTextBlock)this.UIElementsMap.get(MainMenuElements.PlayerName))
+                .setText("Player: " + navalBattle.getUser().getName());
+        return super.getPrintableString();
     }
 
     private void pressButton(MainMenuElements button) {
         setFocus(button);
         UIElementsMap.get(focusedElement).processEvent(UIevents.Pressed);
         UIElementsMap.get(focusedElement).processEvent(UIevents.Released);
+        clearFocus();
     }
+
+    NavalBattleGame navalBattle;
+
 }

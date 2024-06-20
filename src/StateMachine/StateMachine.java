@@ -15,12 +15,13 @@ public abstract class StateMachine<S extends Enum<S>, E extends Enum<E>> {
     }
 
     // Обязательно к вызову перед завершением работы машины состояний
-    public abstract void StopStateMachine();
+    public abstract void stopStateMachine();
 
     public void processEvent(E event) {
         if (transitionTable.containsKey(currentState) && transitionTable.get(currentState).containsKey(event)) {
-            currentState = transitionTable.get(currentState).get(event);
-            onStateChange(currentState);
+            var newState = transitionTable.get(currentState).get(event);
+            onStateChange(newState);
+            currentState = newState;
         } else {
             // Обработка некорректного события
             handleInvalidEvent(event);

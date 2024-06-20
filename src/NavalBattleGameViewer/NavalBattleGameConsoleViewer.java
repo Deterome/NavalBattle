@@ -4,9 +4,11 @@ import NavalBattleGame.GameEnums.GameState;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.UI.Canvas;
 import NavalBattleGameViewer.UI.ConsoleUI.UItemplates.ConsoleIntro;
+import NavalBattleGameViewer.UI.ConsoleUI.UItemplates.ConsoleJoinMenu;
+import NavalBattleGameViewer.UI.ConsoleUI.UItemplates.ConsolePlayerSetupMenu;
+import NavalBattleGameViewer.UI.ConsoleUI.UItemplates.RoundView.ConsoleRoundViewer;
 import NavalBattleGameViewer.UI.Printable;
 import NavalBattleGameViewer.UI.ConsoleUI.UItemplates.ConsoleMainMenu;
-import NavalBattleGameViewer.UI.UIElement;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
@@ -22,8 +24,11 @@ public class NavalBattleGameConsoleViewer {
     public NavalBattleGameConsoleViewer(NavalBattleGame game, int width, int height) {
         this.game = game;
 
-        this.views.put(GameState.MainMenu, new ConsoleMainMenu(game));
-        this.views.put(GameState.Intro, new ConsoleIntro());
+        this.views.put(GameState.MainMenu, new ConsoleMainMenu(game, width, height));
+        this.views.put(GameState.SetPlayerName, new ConsolePlayerSetupMenu(game, width, height));
+        this.views.put(GameState.Intro, new ConsoleIntro(width, height));
+        this.views.put(GameState.Round, new ConsoleRoundViewer(game, width, height));
+        this.views.put(GameState.JoinToRoundMenu, new ConsoleJoinMenu(game, width, height));
 
         viewerSize.x = width;
         viewerSize.y = height;
@@ -34,14 +39,15 @@ public class NavalBattleGameConsoleViewer {
             throw new RuntimeException(e);
         }
 
-        clearOutputBuffer();
         clearScreen();
     }
 
     public void closeViewer() {
         for (var view: views.values()) {
-            for (var uiElement: view.getUIElementsList()) {
-                uiElement.StopStateMachine();
+            if (view instanceof Canvas<?>)  {
+                for (var uiElement: ((Canvas<?>)view).getUIElementsList()) {
+                    uiElement.stopStateMachine();
+                }
             }
         }
     }
@@ -49,21 +55,14 @@ public class NavalBattleGameConsoleViewer {
     public void processGame() {
         while (game.getCurrentState() != GameState.Exit) {
             var currentView = views.get(game.getCurrentState());
+
             if (currentView == null) {
-                addTextToBuffer("There is no view with current state");
+                outputText = "There is no view with current state";
                 redisplay();
                 return;
             }
 
-            ArrayList<UIElement> elementsList = currentView.getUIElementsList();
-            for (UIElement uiElement : elementsList) {
-                if (uiElement instanceof Printable) {
-                    var elementPos = uiElement.getPosition();
-                    setBufferCarriagePosition(elementPos.x , elementPos.y);
-
-                    addTextToBuffer(((Printable) uiElement).getPrintableStringOfElement());
-                }
-            }
+            outputText = currentView.getPrintableString();
             redisplay();
 
             if (currentView instanceof InputListener) {
@@ -93,11 +92,11 @@ public class NavalBattleGameConsoleViewer {
     private void redisplay() {
         setTerminalCarriagePosition(0,0);
         outputInConsole();
-        clearOutputBuffer();
     }
 
     private String processInput() {
-        return lineReader.readLine();
+        setTerminalCarriagePosition(0, viewerSize.y - 1);
+        return lineReader.readLine(">> ");
     }
 
     void clearScreen() {
@@ -105,36 +104,18 @@ public class NavalBattleGameConsoleViewer {
     }
 
     void outputInConsole() {
-        terminal.writer().print(outputBuffer);
+        terminal.writer().print(outputText);
     }
 
     void setTerminalCarriagePosition(int x, int y) {
-        terminal.writer().printf("\033[%d;%dH", x, y);
+        terminal.writer().printf("\033[%d;%dH", y, x);
     }
 
-    void addTextToBuffer(String text) {
-        for (int charId = 0; charId < text.length(); charId++) {
-            this.outputBuffer.setCharAt((viewerSize.x + 1) * bufferCarriagePos.y + bufferCarriagePos.x, text.charAt(charId));
-            bufferCarriagePos.x++;
-        }
-    }
-
-    void setBufferCarriagePosition(int x, int y) {
-        this.bufferCarriagePos.x = x;
-        this.bufferCarriagePos.y = y;
-    }
-
-    void clearOutputBuffer() {
-        outputBuffer.delete(0, outputBuffer.length());
-        outputBuffer.insert(0, (" ".repeat(viewerSize.x) + "\n").repeat(viewerSize.y));
-    }
-
-    StringBuffer outputBuffer = new StringBuffer();
-    Coord2D bufferCarriagePos = new Coord2D();
+    String outputText = "";
     Coord2D viewerSize = new Coord2D();
 
     NavalBattleGame game;
-    HashMap<GameState, Canvas<?>> views = new HashMap<>();
+    HashMap<GameState, Printable> views = new HashMap<>();
 
     Terminal terminal;
     LineReader lineReader;
