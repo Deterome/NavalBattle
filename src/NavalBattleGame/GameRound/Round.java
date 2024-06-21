@@ -1,27 +1,32 @@
 package NavalBattleGame.GameRound;
 
+import NavalBattleGame.GameEnums.GameEvent;
 import NavalBattleGame.GameUsers.Player;
 import NavalBattleGame.GameUsers.User;
+import NavalBattleGame.NavalBattleGame;
 import StateMachine.StateMachine;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Round extends StateMachine<RoundStates, RoundEvents> {
 
-    public Round(User creator) {
+    public Round(NavalBattleGame game) {
         super(RoundStates.WaitingForPlayers);
 
-        connectUserToRound(creator);
-        giveUserRole(creator, UserRole.Admin);
+        this.game = game;
 
-        roundServer = new RoundServer(this);
-        roundServer.start();
+        connectUserToRound(game.getUser());
+        giveUserRole(game.getUser(), UserRole.Admin);
+
     }
 
-    public int getPortOfRound() {
-        return this.roundServer.getPort();
+    public void setRoundPort(int roundPort) {
+        this.roundPort = roundPort;
+    }
+
+    public int getRoundPort() {
+        return this.roundPort;
     }
 
     void connectUserToRound(User user) {
@@ -33,14 +38,12 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     }
 
     boolean tryAddPlayer(User user) {
-        if (players.size() < maxCountOfPlayers && currentState.equals(RoundStates.WaitingForPlayers)) {
+        if (getCountOfUsersWithRole(UserRole.Player) < maxCountOfPlayers) {
             var userRoles = joinedUsers.get(user);
             if (userRoles.contains(UserRole.Watcher)) {
                 deleteUserRole(user, UserRole.Watcher);
             }
             userRoles.add(UserRole.Player);
-
-            players.add(new Player(user));
             return true;
         } else {
             return false;
@@ -62,7 +65,15 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         return true;
     }
 
-    void deleteUserRole(User user, UserRole roleToDelete) {
+    private void createPlayers() {
+        for (var userSet: joinedUsers.entrySet()) {
+            if (userSet.getValue().contains(UserRole.Player)) {
+                players.add(new Player(userSet.getKey()));
+            }
+        }
+    }
+
+    public void deleteUserRole(User user, UserRole roleToDelete) {
         var userRoles = joinedUsers.get(user);
 
         userRoles.remove(roleToDelete);
@@ -70,13 +81,31 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         if (userRoles.isEmpty()) {
             tryAddWatcher(user);
         }
+
+        switch (roleToDelete){
+            case Player -> players.remove(user);
+        }
     }
 
-    void giveUserRole(User user, UserRole newRole) {
-        switch (newRole){
-            case Admin -> tryAddAdmin(user);
-            case Player -> tryAddPlayer(user);
-            case Watcher -> tryAddWatcher(user);
+    public int getCountOfUsersWithRole(UserRole role) {
+        int countOfUsers = 0;
+
+        for (var userSet: joinedUsers.entrySet()) {
+            if (userSet.getValue().contains(role)) {
+                countOfUsers++;
+            }
+        }
+
+        return countOfUsers;
+    }
+
+    public void giveUserRole(User user, UserRole newRole) {
+        if (!joinedUsers.get(user).contains(newRole)) {
+            switch (newRole){
+                case Admin -> tryAddAdmin(user);
+                case Player -> tryAddPlayer(user);
+                case Watcher -> tryAddWatcher(user);
+            }
         }
     }
 
@@ -101,6 +130,7 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     protected void initTransitionTable() {
 
         addNewTransitionToTable(RoundStates.WaitingForPlayers, RoundEvents.StopWaitingForPlayers, RoundStates.PlacementOfShips);
+        addNewTransitionToTable(RoundStates.WaitingForPlayers, RoundEvents.MatchEnd, RoundStates.MatchEnded);
 
         addNewTransitionToTable(RoundStates.PlacementOfShips, RoundEvents.StartMatch, RoundStates.Match);
 
@@ -118,8 +148,15 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
 
     @Override
     protected void onStateChange(RoundStates newState) {
-
+        switch (newState) {
+            case MatchEnded -> {
+                game.processEvent(GameEvent.RoundEnded);
+            }
+        }
     }
 
-    RoundServer roundServer;
+    NavalBattleGame game;
+
+    int roundPort;
+
 }

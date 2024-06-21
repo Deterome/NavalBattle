@@ -1,8 +1,10 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates.RoundView;
 
 import NavalBattleGame.GameRound.RoundEvents;
+import NavalBattleGame.GameRound.UserRole;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.Coord2D;
+import NavalBattleGameViewer.InputListener;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleButton;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleTextBlock;
@@ -12,10 +14,11 @@ import NavalBattleGameViewer.UI.Printable;
 enum WaitingForPlayerMenuElements {
     WaitingText,
     ChangeRoleText,
-    PlayButton
+    PlayButton,
+    CloseRound
 }
 
-public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElements> implements Printable {
+public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElements> implements Printable, InputListener {
     public WaitingForPlayerMenu(NavalBattleGame game, int width, int height) {
         super(width, height);
         initializeUIElements();
@@ -27,7 +30,7 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
         waitingText.setPosition(50,2);
         this.UIElementsMap.put(WaitingForPlayerMenuElements.WaitingText, waitingText);
 
-        var changeRoleText = new ConsoleTextBlock("Change role: watcher [watch], player [player]", 10, 1);
+        var changeRoleText = new ConsoleTextBlock("Change role: watcher [watcher], player [player]", 10, 1);
         changeRoleText.setPosition(0,20);
         this.UIElementsMap.put(WaitingForPlayerMenuElements.ChangeRoleText, changeRoleText);
 
@@ -39,6 +42,13 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
         UIElementsMap.put(WaitingForPlayerMenuElements.PlayButton, playButton);
         focusableElementsMap.put(WaitingForPlayerMenuElements.PlayButton, playButton);
 
+        var closeRoundButton = new ConsoleButton("Close round [close]", 10,1);
+        closeRoundButton.addListener(() -> {
+            game.getCurrentRound().processEvent(RoundEvents.MatchEnd);
+        });
+        closeRoundButton.setPosition(0, 0);
+        UIElementsMap.put(WaitingForPlayerMenuElements.CloseRound, closeRoundButton);
+        focusableElementsMap.put(WaitingForPlayerMenuElements.CloseRound, closeRoundButton);
     }
 
     @Override
@@ -57,7 +67,7 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
         StringBuilder sessionInfoStr = new StringBuilder();
 
         sessionInfoStr.append("Session port: ");
-        sessionInfoStr.append(game.getCurrentRound().getPortOfRound());
+        sessionInfoStr.append(game.getCurrentRound().getRoundPort());
 
         printConstructor.putTextInPosition(sessionInfoStr.toString(), 95, 0);
     }
@@ -95,4 +105,19 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
     }
 
     NavalBattleGame game;
+
+    @Override
+    public void onInput(String enteredText) {
+        if ("watch".equals(enteredText)) {
+            game.getCurrentRound().giveUserRole(game.getUser(), UserRole.Watcher);
+        } else if ("player".equals(enteredText)) {
+            game.getCurrentRound().giveUserRole(game.getUser(), UserRole.Player);
+        } else if ("play".equals(enteredText)) {
+            pressButton(WaitingForPlayerMenuElements.PlayButton);
+        } else if ("close".equals(enteredText)) {
+            pressButton(WaitingForPlayerMenuElements.CloseRound);
+        }
+    }
+
+
 }

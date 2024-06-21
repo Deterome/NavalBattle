@@ -11,6 +11,7 @@ import NavalBattleGameViewer.UI.Printable;
 import NavalBattleGameViewer.UI.ConsoleUI.UItemplates.ConsoleMainMenu;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.InfoCmp;
@@ -18,7 +19,6 @@ import org.jline.utils.InfoCmp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Scanner;
 
 public class NavalBattleGameConsoleViewer {
 
@@ -40,6 +40,17 @@ public class NavalBattleGameConsoleViewer {
             throw new RuntimeException(e);
         }
 
+        drawThread = new Thread(() -> {
+            while (!drawThread.isInterrupted() && game.getCurrentState() != GameState.Exit) {
+                processDraw();
+            }
+        });
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            clearScreen();
+            drawThread.interrupt();
+        }));
+
         clearScreen();
     }
 
@@ -56,7 +67,11 @@ public class NavalBattleGameConsoleViewer {
     public void processGame() {
         drawThread.start();
         while (game.getCurrentState() != GameState.Exit) {
+            try {
                 processInput();
+            } catch (UserInterruptException e) {
+                System.exit(0);
+            }
         }
 
         try {
@@ -72,12 +87,6 @@ public class NavalBattleGameConsoleViewer {
         terminal.flush();
 
         lineReader = LineReaderBuilder.builder().terminal(terminal).build();
-
-        drawThread = new Thread(() -> {
-            while (!drawThread.isInterrupted() && game.getCurrentState() != GameState.Exit) {
-                processDraw();
-            }
-        });
     }
 
     private void closeTerminal() throws IOException {
@@ -102,23 +111,20 @@ public class NavalBattleGameConsoleViewer {
         }
     }
 
-//    private String processInput() {
-//        setTerminalCarriagePosition(0, viewerSize.y - 1);
-//        return lineReader.readLine(">> ");
-//    }
-
-    private void processInput() {
+    private void processInput() throws UserInterruptException {
         if (views.get(game.getCurrentState()) instanceof InputListener) {
             if (drawing) {
                 lineReader.readLine();
             } else {
-                setTerminalCarriagePosition(0, viewerSize.y - 1);
+                setTerminalCarriagePosition(0, viewerSize.y + 1);
                 String input = lineReader.readLine(">> ");
 
                 var currentView = views.get(game.getCurrentState());
                 if (input != null && currentView instanceof InputListener) {
                     ((InputListener) currentView).onInput(input);
                 }
+                setTerminalCarriagePosition(0, viewerSize.y + 1);
+                terminal.writer().print(" ".repeat(viewerSize.x));
             }
             drawing = !drawing;
         }

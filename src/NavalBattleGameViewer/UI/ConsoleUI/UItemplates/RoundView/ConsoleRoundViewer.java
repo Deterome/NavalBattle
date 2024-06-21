@@ -3,12 +3,13 @@ package NavalBattleGameViewer.UI.ConsoleUI.UItemplates.RoundView;
 import NavalBattleGame.GameRound.RoundStates;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.Coord2D;
+import NavalBattleGameViewer.InputListener;
 import NavalBattleGameViewer.UI.Printable;
 
 import java.util.HashMap;
 
 
-public class ConsoleRoundViewer implements Printable {
+public class ConsoleRoundViewer implements Printable, InputListener {
 
     public ConsoleRoundViewer(NavalBattleGame game, int width, int height) {
         this.game = game;
@@ -31,4 +32,11 @@ public class ConsoleRoundViewer implements Printable {
 
     NavalBattleGame game;
 
+    @Override
+    public void onInput(String enteredText) {
+        var currentView = roundViews.get(game.getCurrentRound().getCurrentState());
+        if (currentView instanceof InputListener) {
+            ((InputListener) currentView).onInput(enteredText);
+        }
+    }
 }

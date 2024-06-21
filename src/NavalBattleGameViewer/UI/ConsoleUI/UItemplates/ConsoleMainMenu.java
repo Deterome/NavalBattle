@@ -82,13 +82,6 @@ public class ConsoleMainMenu extends ConsoleCanvas<MainMenuElements> implements 
         return super.getPrintableString();
     }
 
-    private void pressButton(MainMenuElements button) {
-        setFocus(button);
-        UIElementsMap.get(focusedElement).processEvent(UIevents.Pressed);
-        UIElementsMap.get(focusedElement).processEvent(UIevents.Released);
-        clearFocus();
-    }
-
     NavalBattleGame navalBattle;
 
 }

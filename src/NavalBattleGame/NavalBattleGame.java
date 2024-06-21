@@ -3,6 +3,7 @@ package NavalBattleGame;
 import NavalBattleGame.GameEnums.GameEvent;
 import NavalBattleGame.GameEnums.GameState;
 import NavalBattleGame.GameRound.Round;
+import NavalBattleGame.GameRound.RoundServer;
 import NavalBattleGame.GameRound.RoundServerClient;
 import NavalBattleGame.GameUsers.User;
 import StateMachine.StateMachine;
@@ -72,15 +73,32 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
     }
 
     private void createRound() {
-        this.currentRound = new Round(user);
+        currentRound = new Round(this);
+        roundServer = new RoundServer(currentRound);
+        currentRound.setRoundPort(roundServer.getPort());
+        roundServer.start();
     }
 
     private void endRound() {
+        if (connectionToRound != null) {
+            connectionToRound.close();
+            connectionToRound = null;
+        } else if (roundServer != null) {
+            try {
+                roundServer.stop();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            roundServer = null;
+        }
+
         currentRound = null;
     }
 
     Round currentRound;
     RoundServerClient connectionToRound;
+    RoundServer roundServer;
+
 
     User user;
 }

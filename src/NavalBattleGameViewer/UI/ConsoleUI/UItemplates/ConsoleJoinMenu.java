@@ -56,12 +56,5 @@ public class ConsoleJoinMenu extends ConsoleCanvas<JoinMenuElements> implements 
         }
     }
 
-    private void pressButton(JoinMenuElements button) {
-        setFocus(button);
-        UIElementsMap.get(focusedElement).processEvent(UIevents.Pressed);
-        UIElementsMap.get(focusedElement).processEvent(UIevents.Released);
-        clearFocus();
-    }
-
     NavalBattleGame game;
 }

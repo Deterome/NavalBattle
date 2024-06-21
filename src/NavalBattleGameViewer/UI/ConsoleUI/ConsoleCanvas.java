@@ -3,6 +3,7 @@ package NavalBattleGameViewer.UI.ConsoleUI;
 import NavalBattleGameViewer.UI.Canvas;
 import NavalBattleGameViewer.UI.Printable;
 import NavalBattleGameViewer.UI.UIElement;
+import NavalBattleGameViewer.UI.UIevents;
 
 import java.util.ArrayList;
 
@@ -25,5 +26,12 @@ public abstract class ConsoleCanvas<E extends Enum<E>> extends Canvas<E> impleme
             }
         }
         return printConstructor.getPrint();
+    }
+
+    protected void pressButton(E button) {
+        setFocus(button);
+        UIElementsMap.get(focusedElement).processEvent(UIevents.Pressed);
+        UIElementsMap.get(focusedElement).processEvent(UIevents.Released);
+        clearFocus();
     }
 }
