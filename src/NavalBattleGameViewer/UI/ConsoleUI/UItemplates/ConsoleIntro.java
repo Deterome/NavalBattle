@@ -15,10 +15,9 @@ public class ConsoleIntro extends ConsoleCanvas<IntroElements> {
         initializeUIElements();
     }
     private void initializeUIElements() {
-        var introText = new ConsoleTextBlock("NAVAL BATTLE GAME", 50, 20);
+        var introText = new ConsoleTextBlock("NAVAL BATTLE GAME", 10, 1);
         introText.setPosition(50,12);
         this.UIElementsMap.put(IntroElements.IntroText, introText);
-
     }
 
 }

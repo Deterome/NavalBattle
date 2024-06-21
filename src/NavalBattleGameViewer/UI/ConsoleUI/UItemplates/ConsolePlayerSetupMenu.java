@@ -9,7 +9,8 @@ import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleTextBlock;
 
 enum PlayerSetupMenuElements {
-    EnterPlayerNameText
+    EnterPlayerNameText,
+    InputInformation
 }
 
 public class ConsolePlayerSetupMenu extends ConsoleCanvas<PlayerSetupMenuElements> implements InputListener {
@@ -20,10 +21,13 @@ public class ConsolePlayerSetupMenu extends ConsoleCanvas<PlayerSetupMenuElement
         initializeUIElements();
     }
     private void initializeUIElements() {
-        var enterNameText = new ConsoleTextBlock("Enter your nickname: ", 50, 20);
+        var enterNameText = new ConsoleTextBlock("Enter your nickname: ", 10, 1);
         enterNameText.setPosition(50,12);
         this.UIElementsMap.put(PlayerSetupMenuElements.EnterPlayerNameText, enterNameText);
 
+        var inputInfo = new ConsoleTextBlock("To start input you should press ENTER", 10, 1);
+        inputInfo.setPosition(0,0);
+        this.UIElementsMap.put(PlayerSetupMenuElements.InputInformation, inputInfo);
     }
 
     @Override

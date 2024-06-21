@@ -18,6 +18,7 @@ import org.jline.utils.InfoCmp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Scanner;
 
 public class NavalBattleGameConsoleViewer {
 
@@ -53,21 +54,9 @@ public class NavalBattleGameConsoleViewer {
     }
 
     public void processGame() {
+        drawThread.start();
         while (game.getCurrentState() != GameState.Exit) {
-            var currentView = views.get(game.getCurrentState());
-
-            if (currentView == null) {
-                outputText = "There is no view with current state";
-                redisplay();
-                return;
-            }
-
-            outputText = currentView.getPrintableString();
-            redisplay();
-
-            if (currentView instanceof InputListener) {
-                ((InputListener) currentView).onInput(processInput());
-            }
+                processInput();
         }
 
         try {
@@ -83,6 +72,12 @@ public class NavalBattleGameConsoleViewer {
         terminal.flush();
 
         lineReader = LineReaderBuilder.builder().terminal(terminal).build();
+
+        drawThread = new Thread(() -> {
+            while (!drawThread.isInterrupted() && game.getCurrentState() != GameState.Exit) {
+                processDraw();
+            }
+        });
     }
 
     private void closeTerminal() throws IOException {
@@ -94,9 +89,39 @@ public class NavalBattleGameConsoleViewer {
         outputInConsole();
     }
 
-    private String processInput() {
-        setTerminalCarriagePosition(0, viewerSize.y - 1);
-        return lineReader.readLine(">> ");
+    private void processDraw() {
+        if (drawing) {
+            var currentView = views.get(game.getCurrentState());
+            if (currentView == null) {
+                outputText = "There is no view with current state";
+                redisplay();
+                return;
+            }
+            outputText = currentView.getPrintableString();
+            redisplay();
+        }
+    }
+
+//    private String processInput() {
+//        setTerminalCarriagePosition(0, viewerSize.y - 1);
+//        return lineReader.readLine(">> ");
+//    }
+
+    private void processInput() {
+        if (views.get(game.getCurrentState()) instanceof InputListener) {
+            if (drawing) {
+                lineReader.readLine();
+            } else {
+                setTerminalCarriagePosition(0, viewerSize.y - 1);
+                String input = lineReader.readLine(">> ");
+
+                var currentView = views.get(game.getCurrentState());
+                if (input != null && currentView instanceof InputListener) {
+                    ((InputListener) currentView).onInput(input);
+                }
+            }
+            drawing = !drawing;
+        }
     }
 
     void clearScreen() {
@@ -110,6 +135,9 @@ public class NavalBattleGameConsoleViewer {
     void setTerminalCarriagePosition(int x, int y) {
         terminal.writer().printf("\033[%d;%dH", y, x);
     }
+
+    Thread drawThread;
+    boolean drawing = true;
 
     String outputText = "";
     Coord2D viewerSize = new Coord2D();
