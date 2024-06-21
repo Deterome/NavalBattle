@@ -5,6 +5,7 @@ import NavalBattleGame.GameEnums.GameState;
 import NavalBattleGame.GameRound.Round;
 import NavalBattleGame.GameRound.RoundServer;
 import NavalBattleGame.GameRound.RoundServerClient;
+import NavalBattleGame.GameRound.UserRole;
 import NavalBattleGame.GameUsers.User;
 import StateMachine.StateMachine;
 
@@ -26,7 +27,7 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
 
     @Override
     protected void onStateChange(GameState newState) {
-        if (newState == GameState.Round) {
+        if (newState == GameState.Round && currentState == GameState.MainMenu) {
             createRound();
         } else if (newState == GameState.MainMenu && currentState == GameState.Round) {
             endRound();
@@ -44,6 +45,7 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
         addNewTransitionToTable(GameState.MainMenu, GameEvent.GameExited, GameState.Exit);
 
         addNewTransitionToTable(GameState.JoinToRoundMenu, GameEvent.BackToMenu, GameState.MainMenu);
+        addNewTransitionToTable(GameState.JoinToRoundMenu, GameEvent.ConnectedToRound, GameState.Round);
 
         addNewTransitionToTable(GameState.Round, GameEvent.RoundEnded, GameState.MainMenu);
     }
@@ -65,8 +67,10 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
 
     public void joinToRound(int roundPort) {
         try {
-            connectionToRound = new RoundServerClient(this.user, new URI("ws://localhost:" + roundPort));
+            connectionToRound = new RoundServerClient(this, new URI("ws://localhost:" + roundPort));
             connectionToRound.connect();
+
+            currentRound = new Round(this);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -74,22 +78,13 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
 
     private void createRound() {
         currentRound = new Round(this);
-        roundServer = new RoundServer(currentRound);
-        currentRound.setRoundPort(roundServer.getPort());
-        roundServer.start();
+        currentRound.giveUserRole(user, UserRole.Admin);
     }
 
     private void endRound() {
         if (connectionToRound != null) {
             connectionToRound.close();
             connectionToRound = null;
-        } else if (roundServer != null) {
-            try {
-                roundServer.stop();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            roundServer = null;
         }
 
         currentRound = null;
@@ -97,7 +92,6 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
 
     Round currentRound;
     RoundServerClient connectionToRound;
-    RoundServer roundServer;
 
 
     User user;

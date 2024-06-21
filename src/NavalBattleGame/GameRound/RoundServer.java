@@ -4,6 +4,7 @@ import NavalBattleGame.GameUsers.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -22,13 +23,13 @@ public class RoundServer extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-
     }
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-        // обработка отключенпя пользователя
+        // обработка отключения пользователя
         round.disconnectUserFromRound(clients.get(conn));
+        sendRoundInformationToClients();
     }
 
     @Override
@@ -40,7 +41,7 @@ public class RoundServer extends WebSocketServer {
         try {
             jsonNode = objectMapper.readTree(message);
 
-            switch (CommandToServer.CommandByString(jsonNode.path("command").asText())) {
+            switch (CommandToServer.getCommandByString(jsonNode.path("command").asText())) {
                 case CreateUser -> {
                     User newUser = objectMapper.readValue(jsonNode.path("object").asText(), User.class);
                     clients.put(conn, newUser);
@@ -50,6 +51,8 @@ public class RoundServer extends WebSocketServer {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+
+        sendRoundInformationToClients();
     }
 
     @Override
@@ -60,6 +63,42 @@ public class RoundServer extends WebSocketServer {
     @Override
     public void onStart() {
         // скинуть порт, на котором был запущен сервер
+    }
+
+    private void sendRoundInformationToClients() {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String usersMapJsonStr = "";
+        ObjectNode jsonObject = objectMapper.createObjectNode();
+        var joinedUsers = round.getJoinedUsers();
+        try {
+            for (var entry: joinedUsers.entrySet()) {
+                String user = objectMapper.writeValueAsString(entry.getKey());
+                String userRoles = objectMapper.writeValueAsString(entry.getValue());
+
+                jsonObject.put(user, userRoles);
+            }
+            usersMapJsonStr = objectMapper.writeValueAsString(jsonObject);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", CommandToClient.SetUsersList.getStringOfCommand());
+        jsonPackage.put("object", usersMapJsonStr);
+
+        String jsonStr = "";
+
+        try {
+            jsonStr = objectMapper.writeValueAsString(jsonPackage);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (var clientConn: clients.keySet()) {
+            if (!clientConn.isClosing() && !clientConn.isClosed()) {
+                clientConn.send(jsonStr);
+            }
+        }
     }
 
     private HashMap<WebSocket, User> clients = new HashMap<>();

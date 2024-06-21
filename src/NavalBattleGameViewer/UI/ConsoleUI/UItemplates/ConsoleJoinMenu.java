@@ -44,6 +44,7 @@ public class ConsoleJoinMenu extends ConsoleCanvas<JoinMenuElements> implements 
             pressButton(JoinMenuElements.BackToMenuButton);
         } else if (isNumeric(enteredText)) {
             game.joinToRound(Integer.parseInt(enteredText));
+            game.processEvent(GameEvent.ConnectedToRound);
         }
     }
 

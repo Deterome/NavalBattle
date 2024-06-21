@@ -17,16 +17,35 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         this.game = game;
 
         connectUserToRound(game.getUser());
-        giveUserRole(game.getUser(), UserRole.Admin);
-
     }
 
-    public void setRoundPort(int roundPort) {
-        this.roundPort = roundPort;
+    public boolean isLanOpened() {
+        return roundServer != null;
     }
 
-    public int getRoundPort() {
-        return this.roundPort;
+    public void openLAN() {
+        if (roundServer == null) {
+            roundServer = new RoundServer(this);
+            roundServer.start();
+        }
+    }
+
+    public void closeLAN() {
+        if (roundServer != null){
+            try {
+                roundServer.stop();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            this.roundServer = null;
+        }
+    }
+
+    public int getRoundServerPort() {
+        if (roundServer == null) {
+            return -1;
+        }
+        return roundServer.getPort();
     }
 
     void connectUserToRound(User user) {
@@ -99,6 +118,17 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         return countOfUsers;
     }
 
+    public boolean hasUserRole(User user, UserRole role) {
+        if (joinedUsers != null) {
+            if (joinedUsers.get(user) == null) {
+                return false;
+            } else {
+                return joinedUsers.get(user).contains(role);
+            }
+        }
+        return false;
+    }
+
     public void giveUserRole(User user, UserRole newRole) {
         if (!joinedUsers.get(user).contains(newRole)) {
             switch (newRole){
@@ -115,6 +145,10 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
 
     public HashMap<User, ArrayList<UserRole>> getJoinedUsers() {
         return joinedUsers;
+    }
+
+    public void setJoinedUsers(HashMap<User, ArrayList<UserRole>> joinedUsers) {
+        this.joinedUsers = joinedUsers;
     }
 
     HashMap<User, ArrayList<UserRole>> joinedUsers =new HashMap<>();
@@ -150,13 +184,13 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     protected void onStateChange(RoundStates newState) {
         switch (newState) {
             case MatchEnded -> {
+                closeLAN();
                 game.processEvent(GameEvent.RoundEnded);
             }
         }
     }
 
+    RoundServer roundServer;
     NavalBattleGame game;
-
-    int roundPort;
 
 }

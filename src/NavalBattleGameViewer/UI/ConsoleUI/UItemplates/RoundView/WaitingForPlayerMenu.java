@@ -14,7 +14,6 @@ import NavalBattleGameViewer.UI.Printable;
 enum WaitingForPlayerMenuElements {
     WaitingText,
     ChangeRoleText,
-    PlayButton,
     CloseRound
 }
 
@@ -34,14 +33,6 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
         changeRoleText.setPosition(0,20);
         this.UIElementsMap.put(WaitingForPlayerMenuElements.ChangeRoleText, changeRoleText);
 
-        var playButton = new ConsoleButton("Play [play]", 10,1);
-        playButton.addListener(() -> {
-            game.getCurrentRound().processEvent(RoundEvents.StopWaitingForPlayers);
-        });
-        playButton.setPosition(50, 22);
-        UIElementsMap.put(WaitingForPlayerMenuElements.PlayButton, playButton);
-        focusableElementsMap.put(WaitingForPlayerMenuElements.PlayButton, playButton);
-
         var closeRoundButton = new ConsoleButton("Close round [close]", 10,1);
         closeRoundButton.addListener(() -> {
             game.getCurrentRound().processEvent(RoundEvents.MatchEnd);
@@ -58,18 +49,37 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
         printConstructor.putTextInPosition(super.getPrintableString(), 0, 0);
 
         addUsersToPrint(printConstructor);
-        addSessionInfoToPrint(printConstructor);
+
+        if (game.getCurrentRound().hasUserRole(game.getUser(), UserRole.Admin)) {
+            addSessionInfoToPrint(printConstructor);
+            addPlayButton(printConstructor);
+            addLanButtons(printConstructor);
+        }
 
         return printConstructor.getPrint();
     }
 
+    private void addPlayButton(PrintConstructor printConstructor) {
+        printConstructor.putTextInPosition("Play [play]", 50, 22);
+    }
+
+    private void addLanButtons(PrintConstructor printConstructor) {
+        if (!game.getCurrentRound().isLanOpened()) {
+            printConstructor.putTextInPosition("Open LAN [lan]", 95, 0);
+        } else {
+            printConstructor.putTextInPosition("Close LAN [lan]", 95, 0);
+        }
+    }
+
     private void addSessionInfoToPrint(PrintConstructor printConstructor) {
-        StringBuilder sessionInfoStr = new StringBuilder();
+        var currentRound = game.getCurrentRound();
 
-        sessionInfoStr.append("Session port: ");
-        sessionInfoStr.append(game.getCurrentRound().getRoundPort());
+        if (currentRound.isLanOpened()) {
+            String sessionInfoStr = "Session port: " +
+                    game.getCurrentRound().getRoundServerPort();
 
-        printConstructor.putTextInPosition(sessionInfoStr.toString(), 95, 0);
+            printConstructor.putTextInPosition(sessionInfoStr, 95, 1);
+        }
     }
 
     private void addUsersToPrint(PrintConstructor printConstructor) {
@@ -108,16 +118,26 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
 
     @Override
     public void onInput(String enteredText) {
-        if ("watch".equals(enteredText)) {
-            game.getCurrentRound().giveUserRole(game.getUser(), UserRole.Watcher);
-        } else if ("player".equals(enteredText)) {
-            game.getCurrentRound().giveUserRole(game.getUser(), UserRole.Player);
-        } else if ("play".equals(enteredText)) {
-            pressButton(WaitingForPlayerMenuElements.PlayButton);
-        } else if ("close".equals(enteredText)) {
-            pressButton(WaitingForPlayerMenuElements.CloseRound);
+        switch (enteredText) {
+            case "watch" -> game.getCurrentRound().giveUserRole(game.getUser(), UserRole.Watcher);
+            case "player" -> game.getCurrentRound().giveUserRole(game.getUser(), UserRole.Player);
+            case "close" -> pressButton(WaitingForPlayerMenuElements.CloseRound);
+            default -> {
+                if (game.getCurrentRound().hasUserRole(game.getUser(), UserRole.Admin)) {
+                    switch (enteredText) {
+                        case "lan" -> {
+                            if (!game.getCurrentRound().isLanOpened()) {
+                                game.getCurrentRound().openLAN();
+                            } else {
+                                game.getCurrentRound().closeLAN();
+                            }
+                        }
+                        case "play" -> game.getCurrentRound().processEvent(RoundEvents.StopWaitingForPlayers);
+                    }
+                }
+            }
         }
-    }
 
+    }
 
 }

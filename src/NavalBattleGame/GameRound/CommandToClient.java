@@ -1,15 +1,15 @@
 package NavalBattleGame.GameRound;
 
-public enum CommandToServer {
+public enum CommandToClient {
+    SetUsersList ("SetUsersList");
 
-    CreateUser ("CreateUser");
 
-    CommandToServer(String commandString) {
+    CommandToClient(String commandString) {
         this.commandString = commandString;
     }
 
-    static CommandToServer getCommandByString(String commandString) {
-        for (var command: CommandToServer.values()) {
+    static CommandToClient getCommandByString(String commandString) {
+        for (var command: CommandToClient.values()) {
             if (command.commandString.equals(commandString)) {
                 return command;
             }
@@ -22,5 +22,4 @@ public enum CommandToServer {
     }
 
     private String commandString;
-
 }

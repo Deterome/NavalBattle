@@ -7,6 +7,7 @@ public enum GameEvent {
     JoinMenuOpened,
     BackToMenu,
     RoundEnded,
+    ConnectedToRound,
     SettingsMenuOpened,
     GameExited
 
