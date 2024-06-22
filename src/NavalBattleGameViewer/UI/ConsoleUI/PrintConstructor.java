@@ -9,9 +9,15 @@ public class PrintConstructor {
     }
 
     public void putTextInPosition(String text, int x, int y) {
-        for (int charId = 0; charId < text.length(); charId++) {
-            this.printBuffer.setCharAt((printSize.x + 1) * y + x, text.charAt(charId));
-            x++;
+        for (int charId = 0, currX = x, currY = y; charId < text.length(); charId++) {
+            var currentChar = text.charAt(charId);
+            if (currentChar == '\n') {
+                currY++;
+                currX = x;
+            } else {
+                this.printBuffer.setCharAt((printSize.x + 1) * currY + currX, currentChar);
+                currX++;
+            }
         }
     }
 

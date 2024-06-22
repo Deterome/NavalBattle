@@ -1,21 +1,33 @@
 package NavalBattleGame.GameElements;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 public class Ship {
 
     public Ship(int shipSize) {
+        this.parts = new ArrayList<>(Collections.nCopies(shipSize, new Part()));
+    }
 
-        this.parts = new Part[shipSize];
+    public ArrayList<Part> getParts() {
+        return parts;
+    }
 
+    public Part getPart(int partId) {
+        return parts.get(partId);
+    }
+
+    public int getShipSize() {
+        return parts.size();
     }
 
     public void GetDamageAtPart(int partId) {
-        if (partId > this.parts.length || partId < 0) {
-            throw new IndexOutOfBoundsException("Trying to access non-existent part of the ship!");
-        } else {
-            this.parts[partId].GetDamage();
+        Part part = parts.get(partId);
+        if (part != null) {
+            this.parts.get(partId).getDamage();
         }
     }
 
-    Part[] parts;
+    ArrayList<Part> parts = new ArrayList<>();
 
 }

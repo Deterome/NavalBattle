@@ -17,7 +17,8 @@ public class ConsoleRoundViewer implements Printable, InputListener {
         viewerSize.x = width;
         viewerSize.y = height;
 
-        roundViews.put(RoundStates.WaitingForPlayers, new WaitingForPlayerMenu(game, viewerSize.x, viewerSize.y));
+        roundViews.put(RoundStates.WaitingForPlayers, new WaitingForPlayerMenu(game, width, height));
+        roundViews.put(RoundStates.PlacementOfShips, new ConsoleShipsPlacementMenu(game, width, height));
     }
 
     @Override

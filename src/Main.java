@@ -6,7 +6,7 @@ public class Main {
     public static void main(String[] args) {
 
         NavalBattleGame navalBattle = new NavalBattleGame();
-        NavalBattleGameConsoleViewer navalBattleViewer = new NavalBattleGameConsoleViewer(navalBattle, 120, 25);
+        NavalBattleGameConsoleViewer navalBattleViewer = new NavalBattleGameConsoleViewer(navalBattle, 120, 28);
 
         navalBattleViewer.processGame();
 

@@ -1,7 +1,8 @@
 package NavalBattleGame.GameRound;
 
 public enum CommandToClient {
-    SetUsersList ("SetUsersList");
+    SetUsersList ("SetUsersList"),
+    StopWaitingForPlayers ("StopWaitingForPlayers");
 
 
     CommandToClient(String commandString) {

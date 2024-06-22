@@ -61,6 +61,9 @@ public class RoundServerClient extends WebSocketClient {
                 case SetUsersList -> {
                     processSettingUserList(jsonNode.path("object").asText());
                 }
+                case StopWaitingForPlayers -> {
+                    this.game.getCurrentRound().processEvent(RoundEvents.StopWaitingForPlayers);
+                }
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

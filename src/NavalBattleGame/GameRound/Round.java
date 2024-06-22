@@ -1,5 +1,7 @@
 package NavalBattleGame.GameRound;
 
+import NavalBattleGame.GameElements.SeaField;
+import NavalBattleGame.GameElements.Ship;
 import NavalBattleGame.GameEnums.GameEvent;
 import NavalBattleGame.GameUsers.Player;
 import NavalBattleGame.GameUsers.User;
@@ -87,9 +89,27 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     private void createPlayers() {
         for (var userSet: joinedUsers.entrySet()) {
             if (userSet.getValue().contains(UserRole.Player)) {
-                players.add(new Player(userSet.getKey()));
+                players.put(userSet.getKey(), new Player());
             }
         }
+
+        for (var player: players.entrySet()) {
+            giveDefaultShipsToPlayer(player.getValue());
+            giveDefaultFieldToPlayer(player.getValue());
+        }
+    }
+
+    private void giveDefaultShipsToPlayer(Player player) {
+        player.addShips(new Ship(6), 1);
+        player.addShips(new Ship(5), 2);
+        player.addShips(new Ship(4), 3);
+        player.addShips(new Ship(3), 4);
+        player.addShips(new Ship(2), 5);
+        player.addShips(new Ship(1), 6);
+    }
+
+    private void giveDefaultFieldToPlayer(Player player) {
+        player.setField(new SeaField(16, 16));
     }
 
     public void deleteUserRole(User user, UserRole roleToDelete) {
@@ -104,6 +124,10 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         switch (roleToDelete){
             case Player -> players.remove(user);
         }
+    }
+
+    public Player getPlayerByUser(User user) {
+        return players.get(user);
     }
 
     public int getCountOfUsersWithRole(UserRole role) {
@@ -152,7 +176,7 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     }
 
     HashMap<User, ArrayList<UserRole>> joinedUsers =new HashMap<>();
-    ArrayList<Player> players = new ArrayList<>();
+    HashMap<User, Player> players = new HashMap<>();
     int maxCountOfPlayers = 2;
 
     @Override
@@ -186,6 +210,12 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
             case MatchEnded -> {
                 closeLAN();
                 game.processEvent(GameEvent.RoundEnded);
+            }
+            case PlacementOfShips -> {
+                if (roundServer != null) {
+                    roundServer.notifyToStopWaitingPlayers();
+                }
+                createPlayers();
             }
         }
     }

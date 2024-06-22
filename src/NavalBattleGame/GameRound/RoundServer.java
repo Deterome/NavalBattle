@@ -94,9 +94,26 @@ public class RoundServer extends WebSocketServer {
             throw new RuntimeException(e);
         }
 
+        sendPackageToClients(jsonStr);
+    }
+
+    public void notifyToStopWaitingPlayers() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", CommandToClient.StopWaitingForPlayers.getStringOfCommand());
+        String jsonPackageStr = "";
+        try {
+            jsonPackageStr = objectMapper.writeValueAsString(jsonPackage);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        sendPackageToClients(jsonPackageStr);
+    }
+
+    private void sendPackageToClients(String packageStr) {
         for (var clientConn: clients.keySet()) {
             if (!clientConn.isClosing() && !clientConn.isClosed()) {
-                clientConn.send(jsonStr);
+                clientConn.send(packageStr);
             }
         }
     }

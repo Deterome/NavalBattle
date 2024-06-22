@@ -2,14 +2,14 @@ package NavalBattleGame.GameElements;
 
 public class Part {
 
-    private boolean isDestroyed = false;
+    private boolean destroyed = false;
 
-    public boolean getIsDestroyed() {
-        return isDestroyed;
+    public boolean isDestroyed() {
+        return destroyed;
     }
 
-    public void GetDamage() {
-        this.isDestroyed = true;
+    public void getDamage() {
+        this.destroyed = true;
     }
 
 }
