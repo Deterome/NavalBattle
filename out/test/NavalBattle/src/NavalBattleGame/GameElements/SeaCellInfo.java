@@ -5,6 +5,10 @@ public class SeaCellInfo {
         return ship;
     }
 
+    public boolean hasShip() {
+        return ship != null;
+    }
+
     Ship ship;
 
     public int getShipPartId() {
@@ -17,7 +21,8 @@ public class SeaCellInfo {
 
     public AttackResult attackCell() {
         if (!shelled) {
-            if (ship != null) {
+            this.shelled = true;
+            if (hasShip()) {
                 ship.GetDamageAtPart(shipPartId);
                 if (ship.isDestroyed()) {
                     return AttackResult.Destroyed;
@@ -25,7 +30,6 @@ public class SeaCellInfo {
                     return AttackResult.Hit;
                 }
             }
-            this.shelled = true;
         }
         return AttackResult.Miss;
     }

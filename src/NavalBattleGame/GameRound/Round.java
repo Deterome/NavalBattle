@@ -79,8 +79,19 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
             switch (playerActions) {
                 case Attack -> {
                     var attackCoords = CoordinatesParser.getCoordinatesByJson(jsonStringWithCommand);
-                    player.attackPlayer(getNextPlayerToAct(), attackCoords.getKey(), attackCoords.getValue());
-                    switchAttackingPlayer();
+                    if (getNextPlayerToAct().getField().getSeaTable().get(attackCoords.getKey()) != null &&
+                            getNextPlayerToAct().getField().getSeaTable().get(attackCoords.getKey()).get(attackCoords.getValue()) != null &&
+                            !getNextPlayerToAct().getField().getSeaTable().get(attackCoords.getKey()).get(attackCoords.getValue()).isShelled()
+                    ) {
+                        player.attackPlayer(getNextPlayerToAct(), attackCoords.getKey(), attackCoords.getValue());
+                        if (!getNextPlayerToAct().getField().getSeaTable().get(attackCoords.getKey()).get(attackCoords.getValue()).hasShip()) {
+                            switchAttackingPlayer();
+                        } else {
+                            if (getActingPlayer() instanceof Bot) {
+                                ((Bot)getActingPlayer()).attack();
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -88,6 +99,10 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
 
     public Player getNextPlayerToAct() {
         return (Player) players.values().toArray()[(actingPlayerId + 1)%players.size()];
+    }
+
+    public Player getActingPlayer() {
+        return (Player) players.values().toArray()[actingPlayerId];
     }
 
 
@@ -236,6 +251,9 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
 
     @Override
     public void stopStateMachine() {
+        for (var bot: bots) {
+            bot.stopScheduler();
+        }
         stopScheduler();
     }
 
