@@ -207,6 +207,10 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
 
     private void switchAttackingPlayer() {
         actingPlayerId = (actingPlayerId + 1)%players.size();
+
+        if ((Player)players.values().toArray()[actingPlayerId] instanceof Bot) {
+            ((Bot)players.values().toArray()[actingPlayerId]).attack();
+        }
     }
 
     public boolean isPlayerActing(Player player) {

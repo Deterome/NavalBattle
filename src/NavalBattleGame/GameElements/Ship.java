@@ -11,6 +11,13 @@ public class Ship  {
         }
     }
 
+    public boolean isHited() {
+        for (var part: parts) {
+            if (part.isDestroyed()) return true;
+        }
+        return false;
+    }
+
     public ArrayList<Part> getParts() {
         return parts;
     }

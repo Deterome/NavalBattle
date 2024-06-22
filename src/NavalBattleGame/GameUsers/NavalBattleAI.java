@@ -40,8 +40,50 @@ public class NavalBattleAI {
     }
 
 
-//    static public Map.Entry<Integer, Character> analyseFieldAndGetAttackCoords(SeaField field) {
-//
-//    }
+    static public Map.Entry<Integer, Character> analyseFieldAndGetAttackCoords(SeaField field) {
+        var hitedShipCoords = findCoordsOfHitedShipInField(field);
+//        if (hitedShipCoords == null) {
+        if (true) {
+            return getRandomNotShelledCellInField(field);
+        }
+        return getCoordsToAttackHitedShipAtCoords(field, hitedShipCoords);
+    }
+
+    static private Map.Entry<Integer, Character> findCoordsOfHitedShipInField(SeaField field) {
+        HashMap<Integer, HashMap<Character, SeaCellInfo>> seaTable = field.getSeaTable();
+
+        for (var rowEntry: seaTable.entrySet()) {
+            for (var colEntry: rowEntry.getValue().entrySet()) {
+                if (colEntry.getValue().getShip() != null && colEntry.getValue().getShip().isHited() && !colEntry.getValue().getShip().isDestroyed()) {
+                    return new AbstractMap.SimpleEntry<>(rowEntry.getKey(), colEntry.getKey());
+                }
+            }
+        }
+
+        return null;
+    }
+
+    static private Map.Entry<Integer, Character> getCoordsToAttackHitedShipAtCoords(SeaField field, Map.Entry<Integer, Character> hitedShipCoords) {
+
+        return null;
+    }
+
+    static private Map.Entry<Integer, Character> getRandomNotShelledCellInField(SeaField field) {
+        if (field == null) return null;
+        var seaTable = field.getSeaTable();
+
+        ArrayList<Integer> rows = field.getRowsKeys();
+        ArrayList<Character> cols = field.getColsKeys();
+        int row;
+        char col;
+        do {
+            row = rows.get(random.nextInt(rows.size()));
+            col = cols.get(random.nextInt(cols.size()));
+        } while (seaTable.get(row).get(col).isShelled());
+
+        return new AbstractMap.SimpleEntry<>(row, col);
+    }
+
+
     static private Random random = new Random();
 }
