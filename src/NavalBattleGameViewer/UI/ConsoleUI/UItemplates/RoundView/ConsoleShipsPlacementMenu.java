@@ -1,6 +1,7 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates.RoundView;
 
-import NavalBattleGame.GameEnums.ShipPlacement;
+import NavalBattleGame.GameEnums.ShipOrientation;
+import NavalBattleGame.GameUsers.NavalBattleAI;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.InputListener;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
@@ -10,6 +11,7 @@ import NavalBattleGameViewer.UI.ConsoleUI.PrintConstructor;
 import NavalBattleGameViewer.UI.Printable;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -50,14 +52,19 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
     @Override
     public void onInput(String enteredText) {
         if ("rot".equals(enteredText)) {
-            currentShipPlacements = currentShipPlacements == ShipPlacement.Horizontal ?
-                    ShipPlacement.Vertical : ShipPlacement.Horizontal;
+            currentShipOrientation = currentShipOrientation.nextOrientation();
+        } else if ("auto".equals(enteredText)) {
+            var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
+            NavalBattleAI.automaticPlacementOfShipsToField(player.getField(), player.getAvailableShips());
+            player.setAvailableShips(null);
         } else {
             var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
 
             var coordinates = Optional.ofNullable(parseCoordinates(enteredText));
             coordinates.ifPresent(coordinate -> {
-                player.getField().placeShipInCells(player.pickFirstAvailableShip(), currentShipPlacements,coordinate.getKey(), coordinate.getValue());
+                if (player.getField().tryPlaceShipInCells(player.getFirstAvailableShip(), currentShipOrientation,coordinate.getKey(), coordinate.getValue())) {
+                    player.pickFirstAvailableShip();
+                }
             });
         }
     }
@@ -66,13 +73,7 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
         Pattern pattern = Pattern.compile("([A-Z])([0-9]+)");
         Matcher matcher = pattern.matcher(coordinateString);
         if (matcher.find()) {
-            var field = game.getCurrentRound().getPlayerByUser(game.getUser()).getField();
-            Map.Entry<Integer, Character> coordinates = new AbstractMap.SimpleEntry<>(Integer.parseInt(matcher.group(2)), matcher.group(1).charAt(0));
-            var colsKeys = field.getColsKeys();
-            var rowsKeys = field.getRowsKeys();
-            if (colsKeys.contains(coordinates.getValue()) && rowsKeys.contains(coordinates.getKey())) {
-                return coordinates;
-            }
+            return new AbstractMap.SimpleEntry<>(Integer.parseInt(matcher.group(2)), matcher.group(1).charAt(0));
         }
         return null;
     }
@@ -86,6 +87,8 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
     private void addAvailableShipsToPrint(PrintConstructor printConstructor) {
         var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
         var availableShips = player.getAvailableShips();
+        if (availableShips == null) return;
+
         final char SHIP_PART_SYMBOL = '#';
         final char MAIN_SHIP_PART_SYMBOl = 'O';
 
@@ -105,27 +108,31 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
 
         printConstructor.putTextInPosition(shipsList.toString(), 10, 6);
 
-        printConstructor.putTextInPosition("Enter coordinates or rotate ship [rot]", 41, 20);
+        printConstructor.putTextInPosition("Enter coordinates or rotate ship [rot]. Automatic placement [auto]", 37, 20);
 
 
         var pickedShipParts = player.getFirstAvailableShip().getParts();
         StringBuilder pickedShipStr = new StringBuilder();
 
         for (int partId = 0; partId < pickedShipParts.size(); partId++) {
-            if (partId == 0) {
-                pickedShipStr.append(MAIN_SHIP_PART_SYMBOl);
-            } else {
-                pickedShipStr.append(SHIP_PART_SYMBOL);
+            if (partId != 0) {
+                if (currentShipOrientation.equals(ShipOrientation.Up) ||
+                        currentShipOrientation.equals(ShipOrientation.Down)) {
+                    pickedShipStr.append('\n');
+                }
             }
-            if (currentShipPlacements.equals(ShipPlacement.Vertical)) {
-                pickedShipStr.append('\n');
-            }
+            pickedShipStr.append(SHIP_PART_SYMBOL);
+        }
+        if (currentShipOrientation.equals(ShipOrientation.Right) ||
+                currentShipOrientation.equals(ShipOrientation.Down)) {
+            pickedShipStr.setCharAt(0, MAIN_SHIP_PART_SYMBOl);
+        } else {
+            pickedShipStr.setCharAt(pickedShipStr.length()-1, MAIN_SHIP_PART_SYMBOl);
         }
 
         printConstructor.putTextInPosition(pickedShipStr.toString(), 57, 21);
     }
-
     NavalBattleGame game;
 
-    ShipPlacement currentShipPlacements = ShipPlacement.Horizontal;
+    ShipOrientation currentShipOrientation = ShipOrientation.Right;
 }

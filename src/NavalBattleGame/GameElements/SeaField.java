@@ -1,8 +1,9 @@
 package NavalBattleGame.GameElements;
 
-import NavalBattleGame.GameEnums.ShipPlacement;
+import NavalBattleGame.GameEnums.ShipOrientation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class SeaField {
@@ -25,39 +26,58 @@ public class SeaField {
 
     private HashMap<Integer, HashMap<Character, SeaCellInfo>> seaTable;
 
-    public void placeShipInCells(Ship ship, ShipPlacement placement, int row, char col) {
-        if (isCellExist(row, col)) {
-            switch (placement) {
-                case Horizontal -> {
-                    while (!isCellExist(row, (char)(col + (ship.getShipSize()-1)))) {
-                        col--;
-                    }
-                    for (int shipPartId = 0; shipPartId < ship.getShipSize(); shipPartId++, col++) {
-                        seaTable.get(row).get(col).ship = ship;
-                        seaTable.get(row).get(col).shipPartId = shipPartId;
-                    }
-                }
-                case Vertical -> {
-                    while (!isCellExist(row + (ship.getShipSize()-1), col)) {
-                        row--;
-                    }
-                    for (int shipPartId = 0; shipPartId < ship.getShipSize(); shipPartId++, row++) {
-                        seaTable.get(row).get(col).ship = ship;
-                        seaTable.get(row).get(col).shipPartId = shipPartId;
-                    }
-                }
+    public boolean tryPlaceShipInCells(Ship ship, ShipOrientation shipOrientation, int row, char col) {
+        int colStep = 0, rowStep = 0;
+        switch (shipOrientation) {
+            case Right -> colStep = 1;
+            case Left -> colStep = -1;
+            case Up -> rowStep = -1;
+            case Down -> rowStep = 1;
+        }
+        char currCol = col;
+        int currRow = row;
+        for (int shipPartId = 0; shipPartId < ship.getShipSize(); shipPartId++,
+                currCol = (char)(currCol + colStep),
+                currRow += rowStep) {
+            if (!checkIsCellAvailable(currRow, currCol)) {
+                return false;
             }
         }
 
+        currCol = col;
+        currRow = row;
+        for (int shipPartId = 0; shipPartId < ship.getShipSize(); shipPartId++,
+                currCol = (char)(currCol + colStep),
+                currRow += rowStep) {
+            seaTable.get(currRow).get(currCol).ship = ship;
+            seaTable.get(currRow).get(currCol).shipPartId = shipPartId;
+        }
+
+        return true;
     }
 
-    private boolean isCellExist(int row, char col) {
-        return seaTable.containsKey(row) && seaTable.get(row).containsKey(col);
+    private boolean checkIsCellAvailable(int row, char col) {
+        // Проверка существования строки и столбца перед получением значения
+        if (!seaTable.containsKey(row) || !seaTable.getOrDefault(row, new HashMap<>()).containsKey(col)) {
+            return false;
+        }
+
+        // Проверка соседних клеток
+        for (int checkedRow = row - 1; checkedRow <= row + 1; checkedRow++) {
+            for (char checkedCol = (char)(col - 1); checkedCol <= col + 1; checkedCol++) {
+                // Получение значения, если ключ существует, иначе вернется null
+                SeaCellInfo cell = seaTable.getOrDefault(checkedRow, new HashMap<>()).getOrDefault(checkedCol, null);
+                if (cell != null && cell.ship != null) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public void AttackCell(int row, char col) {
 
-        if (isCellExist(row, col)) {
+        if (checkIsCellAvailable(row, col)) {
             var currentCell = seaTable.get(row).get(col);
             if (currentCell.ship != null) {
                 currentCell.ship.GetDamageAtPart(currentCell.shipPartId);

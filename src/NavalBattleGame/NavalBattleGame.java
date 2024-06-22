@@ -3,7 +3,6 @@ package NavalBattleGame;
 import NavalBattleGame.GameEnums.GameEvent;
 import NavalBattleGame.GameEnums.GameState;
 import NavalBattleGame.GameRound.Round;
-import NavalBattleGame.GameRound.RoundServer;
 import NavalBattleGame.GameRound.RoundServerClient;
 import NavalBattleGame.GameRound.UserRole;
 import NavalBattleGame.GameUsers.User;
@@ -92,7 +91,6 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
 
     Round currentRound;
     RoundServerClient connectionToRound;
-
 
     User user;
 }
