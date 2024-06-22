@@ -9,6 +9,11 @@ import java.util.Optional;
 
 public class Player {
 
+    public Player(String nickname) {
+        this.nickname = nickname;
+    }
+
+
     public Ship getFirstAvailableShip() {
         return availableShips.keySet().stream()
                 .findFirst()
@@ -29,6 +34,14 @@ public class Player {
                 availableShips.remove(shipToDelete.getShipSize());
             }
         });
+    }
+
+    public void attackPlayer(Player player, int row, char col) {
+        player.getField().attackCell(row, col);
+    }
+
+    public void addEnemy(Player player) {
+        enemiesFields.put(player, player.field);
     }
 
     public void addShips(Ship ship, int countOfShips) {
@@ -57,7 +70,15 @@ public class Player {
         return availableShips;
     }
 
-    SeaField field;
-    HashMap<Integer, ArrayList<Ship>> availableShips  = new HashMap<>();
+    private SeaField field;
 
+    public String getNickname() {
+        return nickname;
+    }
+
+    HashMap<Integer, ArrayList<Ship>> availableShips  = new HashMap<>();
+    HashMap<Player, SeaField> enemiesFields = new HashMap<>();
+
+
+    String nickname = "noname";
 }

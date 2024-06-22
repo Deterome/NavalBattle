@@ -22,12 +22,25 @@ public class Ship {
     }
 
     public void GetDamageAtPart(int partId) {
-        Part part = parts.get(partId);
-        if (part != null) {
-            this.parts.get(partId).getDamage();
+        Part attackedPart = parts.get(partId);
+        if (attackedPart != null) {
+            attackedPart.getDamage();
+        }
+        destroyed = true;
+        for (var part: parts) {
+            if (!part.isDestroyed()) {
+                destroyed = false;
+                break;
+            }
         }
     }
 
     ArrayList<Part> parts = new ArrayList<>();
+
+    public boolean isDestroyed() {
+        return destroyed;
+    }
+
+    private boolean destroyed = false;
 
 }

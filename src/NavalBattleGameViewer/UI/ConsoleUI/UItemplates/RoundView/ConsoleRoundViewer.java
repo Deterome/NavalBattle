@@ -19,6 +19,7 @@ public class ConsoleRoundViewer implements Printable, InputListener {
 
         roundViews.put(RoundStates.WaitingForPlayers, new WaitingForPlayerMenu(game, width, height));
         roundViews.put(RoundStates.PlacementOfShips, new ConsoleShipsPlacementMenu(game, width, height));
+        roundViews.put(RoundStates.Match, new ConsoleMatchMenu(game, width, height));
     }
 
     @Override

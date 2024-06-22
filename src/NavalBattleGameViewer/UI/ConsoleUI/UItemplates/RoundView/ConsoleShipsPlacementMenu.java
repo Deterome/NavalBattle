@@ -1,6 +1,7 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates.RoundView;
 
 import NavalBattleGame.GameEnums.ShipOrientation;
+import NavalBattleGame.GameRound.RoundEvents;
 import NavalBattleGame.GameUsers.NavalBattleAI;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.InputListener;
@@ -11,7 +12,6 @@ import NavalBattleGameViewer.UI.ConsoleUI.PrintConstructor;
 import NavalBattleGameViewer.UI.Printable;
 
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -39,33 +39,49 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
 
     @Override
     public String getPrintableString() {
+        shipsPlaced = game.getCurrentRound().getPlayerByUser(game.getUser()).getAvailableShips() == null;
+
         PrintConstructor printConstructor = new PrintConstructor();
         printConstructor.setSize(canvasSize.x, canvasSize.y);
         printConstructor.putTextInPosition(super.getPrintableString(), 0, 0);
 
         addFieldToPrint(printConstructor);
-        addAvailableShipsToPrint(printConstructor);
+        if (!shipsPlaced) {
+            addAvailableShipsToPrint(printConstructor);
+        } else {
+            addReadyButtonToPrint(printConstructor);
+        }
 
         return printConstructor.getPrint();
     }
 
+    public void addReadyButtonToPrint(PrintConstructor printConstructor) {
+        printConstructor.putTextInPosition("Ready [ready]", 57, 23 );
+    }
+
     @Override
     public void onInput(String enteredText) {
-        if ("rot".equals(enteredText)) {
-            currentShipOrientation = currentShipOrientation.nextOrientation();
-        } else if ("auto".equals(enteredText)) {
-            var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
-            NavalBattleAI.automaticPlacementOfShipsToField(player.getField(), player.getAvailableShips());
-            player.setAvailableShips(null);
+        if (shipsPlaced) {
+            if ("ready".equals(enteredText)) {
+                game.getCurrentRound().processEvent(RoundEvents.StartMatch);
+            }
         } else {
-            var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
+            if ("rot".equals(enteredText)) {
+                currentShipOrientation = currentShipOrientation.nextOrientation();
+            } else if ("auto".equals(enteredText)) {
+                var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
+                NavalBattleAI.automaticPlacementOfShipsToField(player.getField(), player.getAvailableShips());
+                player.setAvailableShips(null);
+            } else {
+                var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
 
-            var coordinates = Optional.ofNullable(parseCoordinates(enteredText));
-            coordinates.ifPresent(coordinate -> {
-                if (player.getField().tryPlaceShipInCells(player.getFirstAvailableShip(), currentShipOrientation,coordinate.getKey(), coordinate.getValue())) {
-                    player.pickFirstAvailableShip();
-                }
-            });
+                var coordinates = Optional.ofNullable(parseCoordinates(enteredText));
+                coordinates.ifPresent(coordinate -> {
+                    if (player.getField().tryPlaceShipInCells(player.getFirstAvailableShip(), currentShipOrientation,coordinate.getKey(), coordinate.getValue())) {
+                        player.pickFirstAvailableShip();
+                    }
+                });
+            }
         }
     }
 
@@ -87,7 +103,7 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
     private void addAvailableShipsToPrint(PrintConstructor printConstructor) {
         var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
         var availableShips = player.getAvailableShips();
-        if (availableShips == null) return;
+
 
         final char SHIP_PART_SYMBOL = '#';
         final char MAIN_SHIP_PART_SYMBOl = 'O';
@@ -109,7 +125,6 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
         printConstructor.putTextInPosition(shipsList.toString(), 10, 6);
 
         printConstructor.putTextInPosition("Enter coordinates or rotate ship [rot]. Automatic placement [auto]", 37, 20);
-
 
         var pickedShipParts = player.getFirstAvailableShip().getParts();
         StringBuilder pickedShipStr = new StringBuilder();
@@ -133,6 +148,8 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
         printConstructor.putTextInPosition(pickedShipStr.toString(), 57, 21);
     }
     NavalBattleGame game;
+
+    boolean shipsPlaced = false;
 
     ShipOrientation currentShipOrientation = ShipOrientation.Right;
 }

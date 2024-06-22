@@ -2,19 +2,31 @@ package NavalBattleGame.GameElements;
 
 import NavalBattleGame.GameEnums.ShipOrientation;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
+
+enum AttackResult {
+    Miss,
+    Hit,
+    Destroyed
+}
 
 public class SeaField {
 
-    public SeaField(int seaWidth, int seaHeight) {
-        this.seaTable = new HashMap<Integer, HashMap<Character, SeaCellInfo>>();
+    public SeaField(int width, int height) {
+        this.width = width;
+        this.height = height;
 
-        for (int rowNumber = FIRST_NUMBER; rowNumber <= seaHeight; rowNumber++) {
+        clearField();
+    }
+
+    public void clearField() {
+        for (int rowNumber = FIRST_NUMBER; rowNumber <= height; rowNumber++) {
             seaTable.put(rowNumber, new HashMap<>());
 
-            for (char colLetter = FIRST_ALPHABET_SYMBOL; colLetter < FIRST_ALPHABET_SYMBOL + seaWidth; colLetter++) {
+            for (char colLetter = FIRST_ALPHABET_SYMBOL; colLetter < FIRST_ALPHABET_SYMBOL + width; colLetter++) {
                 seaTable.get(rowNumber).put(colLetter, new SeaCellInfo());
             }
         }
@@ -24,7 +36,7 @@ public class SeaField {
         return seaTable;
     }
 
-    private HashMap<Integer, HashMap<Character, SeaCellInfo>> seaTable;
+    private HashMap<Integer, HashMap<Character, SeaCellInfo>> seaTable = new HashMap<Integer, HashMap<Character, SeaCellInfo>>();
 
     public boolean tryPlaceShipInCells(Ship ship, ShipOrientation shipOrientation, int row, char col) {
         int colStep = 0, rowStep = 0;
@@ -56,9 +68,13 @@ public class SeaField {
         return true;
     }
 
+    private boolean isCellExist(int row, char col) {
+        return seaTable.containsKey(row) && seaTable.getOrDefault(row, new HashMap<>()).containsKey(col);
+    }
+
     private boolean checkIsCellAvailable(int row, char col) {
         // Проверка существования строки и столбца перед получением значения
-        if (!seaTable.containsKey(row) || !seaTable.getOrDefault(row, new HashMap<>()).containsKey(col)) {
+        if (!isCellExist(row, col)) {
             return false;
         }
 
@@ -75,15 +91,106 @@ public class SeaField {
         return true;
     }
 
-    public void AttackCell(int row, char col) {
+    private void bombCell(int row, char col) {
+        if (!isCellExist(row, col)) {
+            return;
+        }
 
-        if (checkIsCellAvailable(row, col)) {
-            var currentCell = seaTable.get(row).get(col);
-            if (currentCell.ship != null) {
-                currentCell.ship.GetDamageAtPart(currentCell.shipPartId);
+        for (int checkedRow = row - 1; checkedRow <= row + 1; checkedRow++) {
+            for (char checkedCol = (char)(col - 1); checkedCol <= col + 1; checkedCol++) {
+                // Получение значения, если ключ существует, иначе вернется null
+                SeaCellInfo cell = seaTable.getOrDefault(checkedRow, new HashMap<>()).getOrDefault(checkedCol, null);
+                if (cell != null) {
+                    cell.attackCell();
+                }
+            }
+        }
+    }
+
+    private Map.Entry<Integer, Character> findShipBegin(Ship ship, int partRow, char partCol) {
+        if (!seaTable.containsKey(partRow) ||
+                !seaTable.getOrDefault(partRow, new HashMap<>()).containsKey(partCol)) {
+            return null;
+        }
+
+        var currentCell = seaTable.get(partRow).get(partCol);
+
+        for (int xOffsetRatio = -1; xOffsetRatio <= 1; xOffsetRatio += 2) {
+            int newRow = partRow + (currentCell.shipPartId * xOffsetRatio);
+            if (isCellExist(newRow, partCol)) {
+                if (seaTable.get(newRow).get(partCol).ship == ship) {
+                    return new AbstractMap.SimpleEntry<>(newRow, partCol);
+                }
             }
         }
 
+        for (int yOffsetRatio = -1; yOffsetRatio <= 1; yOffsetRatio += 2) {
+            char newCol = (char)(partCol + (currentCell.shipPartId * yOffsetRatio));
+            if (isCellExist(partRow, newCol)) {
+                if (seaTable.get(partRow).get(newCol).ship == ship) {
+                    return new AbstractMap.SimpleEntry<>(partRow, newCol);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private void bombShip(Ship ship, int explosionStartRow, char explosionStartCol) {
+        if (!seaTable.containsKey(explosionStartRow) ||
+                !seaTable.getOrDefault(explosionStartRow, new HashMap<>()).containsKey(explosionStartCol)) {
+            return;
+        }
+
+        var shipBegin = findShipBegin(ship, explosionStartRow, explosionStartCol);
+        if (shipBegin == null) return;
+
+        int[] steps = {-1, 1};
+        for (var currStep: steps) {
+            int newRow = shipBegin.getKey() + currStep;
+            if (isCellExist(newRow, explosionStartCol)) {
+                if (seaTable.get(newRow).get(explosionStartCol).ship == ship) {
+                    int currRowOffset = 0;
+                    for (var part: ship.parts) {
+                        bombCell(shipBegin.getKey() + currRowOffset, explosionStartCol);
+                        currRowOffset += currStep;
+                    }
+                    return;
+                }
+            }
+
+            char newCol = (char)(shipBegin.getValue() + currStep);
+            if (isCellExist(explosionStartRow, newCol)) {
+                if (seaTable.get(explosionStartRow).get(newCol).ship == ship) {
+                    int currColOffset = 0;
+                    for (var part: ship.parts) {
+                        bombCell(explosionStartRow, (char)(shipBegin.getValue() + currColOffset));
+                        currColOffset += currStep;
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    public AttackResult attackCell(int row, char col) {
+        if (!seaTable.containsKey(row) || !seaTable.getOrDefault(row, new HashMap<>()).containsKey(col)) {
+            return AttackResult.Miss;
+        }
+
+        var currentCell = seaTable.get(row).get(col);
+        if (currentCell.ship != null) {
+            currentCell.ship.GetDamageAtPart(currentCell.shipPartId);
+            if (currentCell.ship.isDestroyed()) {
+                bombShip(currentCell.ship, row, col);
+
+
+                return AttackResult.Destroyed;
+            } else {
+                return AttackResult.Hit;
+            }
+        }
+        return AttackResult.Miss;
     }
 
     public ArrayList<Character> getColsKeys() {
@@ -96,6 +203,14 @@ public class SeaField {
 
     final char FIRST_ALPHABET_SYMBOL = 'A';
     final int FIRST_NUMBER = 1;
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
 
     private int width;
     private int height;

@@ -3,7 +3,9 @@ package NavalBattleGame.GameRound;
 import NavalBattleGame.GameElements.SeaField;
 import NavalBattleGame.GameElements.Ship;
 import NavalBattleGame.GameEnums.GameEvent;
+import NavalBattleGame.GameUsers.Bot;
 import NavalBattleGame.GameUsers.Player;
+import NavalBattleGame.GameUsers.PlayerActions;
 import NavalBattleGame.GameUsers.User;
 import NavalBattleGame.NavalBattleGame;
 import StateMachine.StateMachine;
@@ -71,6 +73,25 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         }
     }
 
+    public ArrayList<Player> getPlayersList() {
+        return new ArrayList<>(this.players.values());
+    }
+
+    public void makeAction(Player player, String jsonStringWithCommand) {
+        if (isPlayerActing(player)) {
+//            switch (playerActions) {
+//                case Attack -> {
+//                    player.attackPlayer(getNextPlayerToAct(), );
+//                }
+//            }
+        }
+    }
+
+    public Player getNextPlayerToAct() {
+        return (Player) players.values().toArray()[(actingPlayerId + 1)%players.size()];
+    }
+
+
     private boolean tryAddAdmin(User user) {
         joinedUsers.get(user).add(UserRole.Admin);
         return true;
@@ -89,13 +110,22 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     private void createPlayers() {
         for (var userSet: joinedUsers.entrySet()) {
             if (userSet.getValue().contains(UserRole.Player)) {
-                players.put(userSet.getKey(), new Player());
+                players.put(userSet.getKey().getName(), new Player(userSet.getKey().getName()));
             }
         }
-
+        int botId = 1;
+        while (players.size() < minCountOfPlayers) {
+            String botName = "Bot" + botId++;
+            Bot newBot = new Bot(botName);
+            players.put(botName, newBot);
+            bots.add(newBot);
+        }
         for (var player: players.entrySet()) {
             giveDefaultShipsToPlayer(player.getValue());
             giveDefaultFieldToPlayer(player.getValue());
+        }
+        for (var bot: bots) {
+            bot.placeShipsOnField();
         }
     }
 
@@ -120,14 +150,10 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         if (userRoles.isEmpty()) {
             tryAddWatcher(user);
         }
-
-        switch (roleToDelete){
-            case Player -> players.remove(user);
-        }
     }
 
     public Player getPlayerByUser(User user) {
-        return players.get(user);
+        return players.get(user.getName());
     }
 
     public int getCountOfUsersWithRole(UserRole role) {
@@ -175,9 +201,35 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         this.joinedUsers = joinedUsers;
     }
 
+    private void startMatch() {
+        addEnemiesToPlayers();
+
+    }
+
+    private void switchAttackingPlayer() {
+        actingPlayerId = (actingPlayerId + 1)%players.size();
+    }
+
+    public boolean isPlayerActing(Player player) {
+        return (Player)players.values().toArray()[actingPlayerId] == player;
+    }
+
+    private void addEnemiesToPlayers() {
+        for (var firstPlayer: players.values()) {
+            for (var secondPlayer: players.values()) {
+                if (firstPlayer != secondPlayer) {
+                    firstPlayer.addEnemy(secondPlayer);
+                }
+            }
+        }
+    }
+
     HashMap<User, ArrayList<UserRole>> joinedUsers =new HashMap<>();
-    HashMap<User, Player> players = new HashMap<>();
+    HashMap<String, Player> players = new HashMap<>();
+    ArrayList<Bot> bots = new ArrayList<>();
+    int actingPlayerId = 0;
     int maxCountOfPlayers = 2;
+    int minCountOfPlayers = 2;
 
     @Override
     public void stopStateMachine() {
@@ -216,6 +268,9 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
                     roundServer.notifyToStopWaitingPlayers();
                 }
                 createPlayers();
+            }
+            case Match -> {
+                startMatch();
             }
         }
     }

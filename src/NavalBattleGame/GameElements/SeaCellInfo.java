@@ -11,5 +11,17 @@ public class SeaCellInfo {
         return shipPartId;
     }
 
+    public boolean isShelled() {
+        return shelled;
+    }
+
+    public void attackCell() {
+        if (!shelled) {
+            this.ship.GetDamageAtPart(shipPartId);
+            this.shelled = true;
+        }
+    }
+
+    boolean shelled = false;
     int shipPartId;
 }
