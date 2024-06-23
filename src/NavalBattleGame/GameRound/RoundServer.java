@@ -1,5 +1,6 @@
 package NavalBattleGame.GameRound;
 
+import NavalBattleGame.GameUsers.Player;
 import NavalBattleGame.GameUsers.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,9 +44,10 @@ public class RoundServer extends WebSocketServer {
 
             switch (CommandToServer.getCommandByString(jsonNode.path("command").asText())) {
                 case CreateUser -> {
-                    User newUser = objectMapper.readValue(jsonNode.path("object").asText(), User.class);
-                    clients.put(conn, newUser);
-                    round.connectUserToRound(newUser);
+                    createUser(conn, jsonNode.path("object").asText());
+                }
+                case PlayerIsReady -> {
+                    setPlayerIsReady(jsonNode.path("object").asText());
                 }
             }
         } catch (JsonProcessingException e) {
@@ -54,6 +56,37 @@ public class RoundServer extends WebSocketServer {
 
         sendRoundInformationToClients();
     }
+
+    void notifyPlayersToStartMatch() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", CommandToClient.StartMatch.getStringOfCommand());
+        String jsonPackageStr = "";
+        try {
+            jsonPackageStr = objectMapper.writeValueAsString(jsonPackage);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        sendPackageToClients(jsonPackageStr);
+    }
+
+    void sendPlayersInformationToClients() {
+
+    }
+
+    void setPlayerIsReady(String playerJsonStr) {
+        Player player = round.getPlayerByNickname(playerJsonStr);
+
+        if (player != null) round.setPlayerReadiness(player, true);
+    }
+
+    void createUser(WebSocket conn, String userJsonStr) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        User newUser = objectMapper.readValue(userJsonStr, User.class);
+        clients.put(conn, newUser);
+        round.connectUserToRound(newUser);
+    }
+
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
@@ -97,7 +130,7 @@ public class RoundServer extends WebSocketServer {
         sendPackageToClients(jsonStr);
     }
 
-    public void notifyToStopWaitingPlayers() {
+    public void notifyClientsToStopWaitingPlayers() {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode jsonPackage = objectMapper.createObjectNode();
         jsonPackage.put("command", CommandToClient.StopWaitingForPlayers.getStringOfCommand());

@@ -64,10 +64,27 @@ public class RoundServerClient extends WebSocketClient {
                 case StopWaitingForPlayers -> {
                     this.game.getCurrentRound().processEvent(RoundEvents.StopWaitingForPlayers);
                 }
+                case StartMatch -> {
+                    this.game.getCurrentRound().processEvent(RoundEvents.StartMatch);
+                }
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void notifyServerOfReadiness() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", CommandToServer.PlayerIsReady.getStringOfCommand());
+        jsonPackage.put("object", game.getCurrentRound().getPlayerByUser(game.getUser()).getNickname());
+        String jsonPackageStr = "";
+        try {
+            jsonPackageStr = objectMapper.writeValueAsString(jsonPackage);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        send(jsonPackageStr);
     }
 
     private void processSettingUserList(String jsonObjectStr) throws JsonProcessingException {

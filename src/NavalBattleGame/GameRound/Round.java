@@ -138,13 +138,24 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
             players.put(botName, newBot);
             bots.add(newBot);
         }
+
+        for (var player: players.values()) {
+            playersReadiness.put(player, false);
+        }
+    }
+
+    private void onPlacementOfShipsStarted() {
+        createPlayers();
+
         for (var player: players.entrySet()) {
             giveDefaultShipsToPlayer(player.getValue());
             giveDefaultFieldToPlayer(player.getValue());
         }
         for (var bot: bots) {
             bot.placeShipsOnField();
+            setPlayerReadiness(bot, true);
         }
+
     }
 
     private void giveDefaultShipsToPlayer(Player player) {
@@ -197,6 +208,13 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         return false;
     }
 
+    public Player getPlayerByNickname(String nickName) {
+        for (var player: players.values()) {
+            if (player.getNickname().equals(nickName)) return player;
+        }
+        return null;
+    }
+
     public void giveUserRole(User user, UserRole newRole) {
         if (!joinedUsers.get(user).contains(newRole)) {
             switch (newRole){
@@ -219,9 +237,25 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         this.joinedUsers = joinedUsers;
     }
 
-    private void startMatch() {
-        addEnemiesToPlayers();
+    private HashMap<Player, Boolean> playersReadiness = new HashMap<>();
 
+    public void setPlayerReadiness(Player player, boolean readiness) {
+        playersReadiness.put(player, readiness);
+
+        for (var playerReadiness: playersReadiness.entrySet()) {
+            if (!playerReadiness.getValue()) return;
+        }
+        processEvent(RoundEvents.StartMatch);
+    }
+
+    public boolean isPlayerReady(Player player) {
+        return playersReadiness.get(player);
+    }
+
+    private void onMatchStart() {
+        if (isLanOpened()) {
+            roundServer.notifyPlayersToStartMatch();
+        }
     }
 
     private void switchAttackingPlayer() {
@@ -234,16 +268,6 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
 
     public boolean isPlayerActing(Player player) {
         return (Player)players.values().toArray()[actingPlayerId] == player;
-    }
-
-    private void addEnemiesToPlayers() {
-        for (var firstPlayer: players.values()) {
-            for (var secondPlayer: players.values()) {
-                if (firstPlayer != secondPlayer) {
-                    firstPlayer.addEnemy(secondPlayer);
-                }
-            }
-        }
     }
 
     HashMap<User, ArrayList<UserRole>> joinedUsers =new HashMap<>();
@@ -290,12 +314,12 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
             }
             case PlacementOfShips -> {
                 if (roundServer != null) {
-                    roundServer.notifyToStopWaitingPlayers();
+                    roundServer.notifyClientsToStopWaitingPlayers();
                 }
-                createPlayers();
+                onPlacementOfShipsStarted();
             }
             case Match -> {
-                startMatch();
+                onMatchStart();
             }
         }
     }

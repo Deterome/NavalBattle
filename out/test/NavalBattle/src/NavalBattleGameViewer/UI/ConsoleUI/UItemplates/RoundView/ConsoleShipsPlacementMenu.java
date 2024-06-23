@@ -1,7 +1,6 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates.RoundView;
 
 import NavalBattleGame.GameEnums.ShipOrientation;
-import NavalBattleGame.GameRound.RoundEvents;
 import NavalBattleGame.GameUsers.CoordinatesParser;
 import NavalBattleGame.GameUsers.NavalBattleAI;
 import NavalBattleGame.NavalBattleGame;
@@ -12,11 +11,7 @@ import NavalBattleGameViewer.UI.ConsoleUI.FieldPrinter;
 import NavalBattleGameViewer.UI.ConsoleUI.PrintConstructor;
 import NavalBattleGameViewer.UI.Printable;
 
-import java.util.AbstractMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 enum ShipsPlacementMenuElements {
     InfoText
@@ -57,14 +52,20 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
     }
 
     public void addReadyButtonToPrint(PrintConstructor printConstructor) {
-        printConstructor.putTextInPosition("Ready [ready]", 57, 23 );
+        var currentRound = game.getCurrentRound();
+        if (!currentRound.isPlayerReady(currentRound.getPlayerByUser(game.getUser()))) {
+            printConstructor.putTextInPosition("Ready [ready]", 57, 23 );
+        }
     }
 
     @Override
     public void onInput(String enteredText) {
         if (shipsPlaced) {
             if ("ready".equals(enteredText)) {
-                game.getCurrentRound().processEvent(RoundEvents.StartMatch);
+                game.getCurrentRound().setPlayerReadiness(game.getCurrentRound().getPlayerByUser(game.getUser()), true);
+                if (game.isConnectedToRoundServer()) {
+                    game.getConnectionToRound().notifyServerOfReadiness();
+                }
             }
         } else {
             if ("rot".equals(enteredText)) {

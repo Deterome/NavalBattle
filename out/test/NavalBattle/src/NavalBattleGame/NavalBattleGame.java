@@ -83,6 +83,10 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
         currentRound.giveUserRole(user, UserRole.Admin);
     }
 
+    public boolean isConnectedToRoundServer() {
+        return connectionToRound != null;
+    }
+
     private void endRound() {
         if (connectionToRound != null) {
             connectionToRound.close();
@@ -92,7 +96,14 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
         currentRound = null;
     }
 
+
+
     Round currentRound;
+
+    public RoundServerClient getConnectionToRound() {
+        return connectionToRound;
+    }
+
     RoundServerClient connectionToRound;
 
     User user;
