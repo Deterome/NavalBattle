@@ -42,6 +42,10 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         }
     }
 
+    public String getRoundServerAddress() {
+        return roundServer.getAddress().toString();
+    }
+
     public int getRoundServerPort() {
         if (roundServer == null) {
             return -1;

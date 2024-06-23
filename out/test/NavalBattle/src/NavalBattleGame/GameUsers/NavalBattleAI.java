@@ -82,7 +82,6 @@ public class NavalBattleAI {
                 if (seaTable.get(hitedShipCoords.getKey() + moveDirection[1]) != null &&
                         seaTable.get(hitedShipCoords.getKey() + moveDirection[1]).get((char)(hitedShipCoords.getValue() + moveDirection[0])) != null &&
                         seaTable.get(hitedShipCoords.getKey() + moveDirection[1]).get((char)(hitedShipCoords.getValue() + moveDirection[0])).hasShip()) {
-
                     // теперь мы точно знаем расположение корабля и возвращаем координаты по нужной оси
                     switch (moveDirectionEntry.getKey()) {
                         case Horizontal -> {

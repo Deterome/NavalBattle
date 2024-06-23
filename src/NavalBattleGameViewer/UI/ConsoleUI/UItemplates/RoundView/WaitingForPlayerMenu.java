@@ -65,9 +65,9 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
 
     private void addLanButtons(PrintConstructor printConstructor) {
         if (!game.getCurrentRound().isLanOpened()) {
-            printConstructor.putTextInPosition("Open LAN [lan]", 95, 0);
+            printConstructor.putTextInPosition("Open LAN [lan]", 90, 0);
         } else {
-            printConstructor.putTextInPosition("Close LAN [lan]", 95, 0);
+            printConstructor.putTextInPosition("Close LAN [lan]", 90, 0);
         }
     }
 
@@ -75,10 +75,10 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
         var currentRound = game.getCurrentRound();
 
         if (currentRound.isLanOpened()) {
-            String sessionInfoStr = "Session port: " +
-                    game.getCurrentRound().getRoundServerPort();
+            String sessionInfoStr = "Session address:\n" +
+                    game.getCurrentRound().getRoundServerAddress();
 
-            printConstructor.putTextInPosition(sessionInfoStr, 95, 1);
+            printConstructor.putTextInPosition(sessionInfoStr, 90, 1);
         }
     }
 

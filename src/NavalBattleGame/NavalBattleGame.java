@@ -64,15 +64,18 @@ public class NavalBattleGame extends StateMachine<GameState, GameEvent> {
         return currentRound;
     }
 
-    public void joinToRound(int roundPort) {
+    public void joinToRound(String address, int roundPort) {
         try {
-            connectionToRound = new RoundServerClient(this, new URI("ws://localhost:" + roundPort));
+            connectionToRound = new RoundServerClient(this, new URI("ws://" + address + ":" + roundPort));
             connectionToRound.connect();
 
             currentRound = new Round(this);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+    public void joinToRound(int roundPort) {
+        joinToRound("localhost", roundPort);
     }
 
     private void createRound() {

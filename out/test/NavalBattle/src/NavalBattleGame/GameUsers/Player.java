@@ -76,9 +76,17 @@ public class Player {
         return nickname;
     }
 
+    public void ready() {
+        ready = true;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
     HashMap<Integer, ArrayList<Ship>> availableShips  = new HashMap<>();
     HashMap<Player, SeaField> enemiesFields = new HashMap<>();
 
-
+    boolean ready = false;
     String nickname = "noname";
 }
