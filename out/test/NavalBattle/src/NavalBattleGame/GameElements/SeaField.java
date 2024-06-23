@@ -2,10 +2,7 @@ package NavalBattleGame.GameElements;
 
 import NavalBattleGame.GameEnums.ShipOrientation;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 enum AttackResult {
     Miss,
@@ -189,6 +186,18 @@ public class SeaField {
             }
         }
 
+    }
+
+    public ArrayList<Ship> getShipsListFromField() {
+        HashSet<Ship> shipSet = new HashSet<>();
+        for (var rowEntry: seaTable.entrySet()) {
+            for (var colEntry: rowEntry.getValue().entrySet()) {
+                if (colEntry.getValue().hasShip()) {
+                    shipSet.add(colEntry.getValue().ship);
+                }
+            }
+        }
+        return new ArrayList<>(shipSet);
     }
 
     public ArrayList<Character> getColsKeys() {

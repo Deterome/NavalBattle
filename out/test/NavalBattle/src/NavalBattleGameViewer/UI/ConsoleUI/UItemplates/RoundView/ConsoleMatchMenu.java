@@ -79,6 +79,7 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
             printConstructor.putTextInPosition(playerActing + player.getNickname(), printXPos + 15 - playerActing.length(), 2);
             printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField(), game.getCurrentRound().getPlayerByUser(game.getUser()) != player), printXPos, 3);
 //            printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField()), printXPos, 2);
+            printConstructor.putTextInPosition("Remaining ships in field: " + player.getCountOfRemainingShips(),printXPos + 5, 22);
             printXPos += printXOffset;
         }
     }

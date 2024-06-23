@@ -76,6 +76,14 @@ public class Player {
         return nickname;
     }
 
+    public int getCountOfRemainingShips() {
+        int remainingShipsCount = 0;
+        for (var ship: field.getShipsListFromField()) {
+            if (!ship.isDestroyed()) remainingShipsCount++;
+        }
+        return remainingShipsCount;
+    }
+
     HashMap<Integer, ArrayList<Ship>> availableShips  = new HashMap<>();
     HashMap<Player, SeaField> enemiesFields = new HashMap<>();
 

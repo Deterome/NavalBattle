@@ -96,9 +96,22 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
                             }
                         }
                     }
+
+                    for (var checkingPlayer: players.values()) {
+                        if (didPlayerLose(checkingPlayer)) {
+                            processEvent(RoundEvents.MatchEnd);
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private boolean didPlayerLose(Player player) {
+        if (player.getCountOfRemainingShips() == 0) {
+            return true;
+        }
+        return false;
     }
 
     public Player getNextPlayerToAct() {
