@@ -119,7 +119,7 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
     @Override
     public void onInput(String enteredText) {
         switch (enteredText) {
-            case "watch" -> game.getCurrentRound().giveUserRole(game.getUser(), UserRole.Watcher);
+            case "watcher" -> game.getCurrentRound().giveUserRole(game.getUser(), UserRole.Watcher);
             case "player" -> game.getCurrentRound().giveUserRole(game.getUser(), UserRole.Player);
             case "close" -> pressButton(WaitingForPlayerMenuElements.CloseRound);
             default -> {

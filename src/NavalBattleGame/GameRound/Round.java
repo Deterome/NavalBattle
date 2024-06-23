@@ -108,10 +108,7 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     }
 
     private boolean didPlayerLose(Player player) {
-        if (player.getCountOfRemainingShips() == 0) {
-            return true;
-        }
-        return false;
+        return player.getCountOfRemainingShips() == 0;
     }
 
     public Player getNextPlayerToAct() {
