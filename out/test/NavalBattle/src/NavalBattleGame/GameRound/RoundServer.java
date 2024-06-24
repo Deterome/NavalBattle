@@ -13,13 +13,17 @@ import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import ws.WebSocketInspector;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.HashMap;
 
 public class RoundServer extends WebSocketServer {
 
     public RoundServer(Round round) {
-        super( new InetSocketAddress("localhost", WebSocketInspector.findFreePortOnHost("localhost",8000, 8500)));
+        super( new InetSocketAddress(WebSocketInspector.findHost(), WebSocketInspector.findFreePortOnHost("localhost",8000, 8500)));
 
         this.round = round;
     }
