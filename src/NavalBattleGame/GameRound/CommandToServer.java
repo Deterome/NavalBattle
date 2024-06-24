@@ -4,7 +4,8 @@ public enum CommandToServer {
 
     CreateUser ("CreateUser"),
     PlayerIsReady ("PlayerIsReady"),
-    UpdatePlayerInformation("LoadPlayerInformation");
+    UpdatePlayerInformation ("LoadPlayerInformation"),
+    ProcessMove ("ProcessMove");
 
     CommandToServer(String commandString) {
         this.commandString = commandString;

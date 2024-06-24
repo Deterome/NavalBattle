@@ -1,16 +1,18 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates.RoundView;
 
 import NavalBattleGame.GameEnums.ShipOrientation;
-import NavalBattleGame.GameUsers.CoordinatesParser;
 import NavalBattleGame.GameUsers.NavalBattleAI;
 import NavalBattleGame.NavalBattleGame;
+import NavalBattleGame.ToolsForGame.JsonParser;
 import NavalBattleGameViewer.InputListener;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleTextBlock;
 import NavalBattleGameViewer.UI.ConsoleUI.FieldPrinter;
 import NavalBattleGameViewer.UI.ConsoleUI.PrintConstructor;
 import NavalBattleGameViewer.UI.Printable;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.util.Map;
 import java.util.Optional;
 
 enum ShipsPlacementMenuElements {
@@ -77,12 +79,23 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
             } else {
                 var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
 
-                var coordinates = Optional.ofNullable(CoordinatesParser.getCoordinatesByString(enteredText));
-                coordinates.ifPresent(coordinate -> {
-                    if (player.getField().tryPlaceShipInCells(player.findFirstAvailableShip(), currentShipOrientation,coordinate.getKey(), coordinate.getValue())) {
-                        player.pickFirstAvailableShip();
-                    }
-                });
+                Optional<String> coordinatesJsonStr = null;
+                try {
+                    coordinatesJsonStr = Optional.ofNullable(JsonParser.createJsonStringFromCoordinatesString(enteredText));
+                    coordinatesJsonStr.ifPresent(coordinateJson -> {
+                        Map.Entry<Integer, Character> coordinates = null;
+                        try {
+                            coordinates = JsonParser.makeCoordinatesFromJsonString(coordinateJson);
+                            if (player.getField().tryPlaceShipInCells(player.findFirstAvailableShip(), currentShipOrientation,coordinates.getKey(), coordinates.getValue())) {
+                                player.pickFirstAvailableShip();
+                            }
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }

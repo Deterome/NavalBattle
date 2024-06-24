@@ -1,5 +1,6 @@
 package NavalBattleGame.GameUsers;
 
+import NavalBattleGame.GameElements.AttackResult;
 import NavalBattleGame.GameElements.SeaField;
 import NavalBattleGame.GameElements.Ship;
 
@@ -39,8 +40,8 @@ public class Player {
         });
     }
 
-    public void attackPlayer(Player player, int row, char col) {
-        player.getField().attackCell(row, col);
+    public AttackResult attackPlayer(Player player, int row, char col) {
+        return player.getField().attackCell(row, col);
     }
 
     public void addShips(Ship ship, int countOfShips) {

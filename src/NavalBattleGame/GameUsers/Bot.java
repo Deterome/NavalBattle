@@ -30,8 +30,11 @@ public class Bot extends Player {
         scheduledExecutorService.schedule(new Runnable() {
             @Override
             public void run() {
-                round.makeAction(player, PlayerActions.Attack,
-                        CoordinatesParser.makeJsonStringOfAttackAction(attackCoords.getKey(), attackCoords.getValue()));
+                round.makeAction(
+                        player,
+                        PlayerAction.Attack,
+                        attackCoords.getKey(),
+                        attackCoords.getValue());
 
             }
         },1, TimeUnit.SECONDS);

@@ -1,6 +1,7 @@
 package NavalBattleGame.GameRound;
 
 import NavalBattleGame.GameUsers.Player;
+import NavalBattleGame.GameUsers.PlayerAction;
 import NavalBattleGame.GameUsers.User;
 import NavalBattleGame.ToolsForGame.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -57,12 +58,45 @@ public class RoundServer extends WebSocketServer {
                 case UpdatePlayerInformation -> {
                     updatePlayerInformation(jsonNode.path("object").asText());
                 }
+                case ProcessMove -> {
+                    processClientMovement(jsonNode.path("object").asText());
+                }
             }
 
             sendRoundInformationToClients();
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void notifyClientsAboutPlayerMovement(Player player, String movementInfo) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", CommandToClient.PrecessPlayerMove.getStringOfCommand());
+        jsonPackage.put("object", movementInfo);
+        for (var clientsEntry: clients.entrySet()) {
+            if (!round.findPlayerByUser(clientsEntry.getValue()).getNickname()
+                    .equals(player.getNickname())) {
+                clientsEntry.getKey().send(objectMapper.writeValueAsString(jsonPackage));
+            }
+        }
+    }
+
+    public void processClientMovement(String movementInfo) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        JsonNode jsonNode = objectMapper.readTree(movementInfo);
+        var playerAction = PlayerAction.getActionByString(jsonNode.path(PlayerAction.enumString).asText());
+        var coordinates = JsonParser.makeCoordinatesFromJsonString(jsonNode.path("coordinates").asText());
+        var player = round.findPlayerByNickname(jsonNode.path("player_nickname").asText());
+        round.makeAction(player,
+                playerAction,
+                coordinates.getKey(),
+                coordinates.getValue()
+                );
+
+        notifyClientsAboutPlayerMovement(player, movementInfo);
     }
 
     private void updatePlayerInformation(String playerJsonStr) throws JsonProcessingException {
@@ -79,9 +113,9 @@ public class RoundServer extends WebSocketServer {
         jsonPackage.put("command", CommandToClient.UpdatePlayerInformation.getStringOfCommand());
         jsonPackage.put("object", JsonParser.createJsonStringFromPlayer(player));
 
-        for (var client: clients.entrySet()) {
-            if (!round.findPlayerByUser(client.getValue()).getNickname().equals(player.getNickname())) {
-                client.getKey().send(objectMapper.writeValueAsString(jsonPackage));
+        for (var clientsEntry: clients.entrySet()) {
+            if (!round.findPlayerByUser(clientsEntry.getValue()).getNickname().equals(player.getNickname())) {
+                clientsEntry.getKey().send(objectMapper.writeValueAsString(jsonPackage));
             }
         }
     }

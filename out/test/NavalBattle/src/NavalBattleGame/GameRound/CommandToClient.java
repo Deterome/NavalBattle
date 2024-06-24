@@ -5,7 +5,8 @@ public enum CommandToClient {
     StopWaitingForPlayers ("StopWaitingForPlayers"),
     StartMatch ("StartMatch"),
     SendPlayerInformationToServer ("SendPlayerInformationToServer"),
-    UpdatePlayerInformation("UpdatePlayerInformation");
+    UpdatePlayerInformation("UpdatePlayerInformation"),
+    PrecessPlayerMove("PrecessPlayerMove");
 
 
     CommandToClient(String commandString) {

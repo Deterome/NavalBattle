@@ -1,7 +1,7 @@
 package NavalBattleGame.GameRound;
 
 import NavalBattleGame.GameEnums.GameEvent;
-import NavalBattleGame.GameUsers.Player;
+import NavalBattleGame.GameUsers.PlayerAction;
 import NavalBattleGame.GameUsers.User;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGame.ToolsForGame.JsonParser;
@@ -69,10 +69,26 @@ public class RoundServerClient extends WebSocketClient {
                 case UpdatePlayerInformation -> {
                     updatePlayerInformation(jsonNode.path("object").asText());
                 }
+                case PrecessPlayerMove -> {
+                    processPlayerMovement(jsonNode.path("object").asText());
+                }
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void processPlayerMovement(String movementInfo) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(movementInfo);
+        var playerAction = PlayerAction.getActionByString(jsonNode.path(PlayerAction.enumString).asText());
+        var coordinates = JsonParser.makeCoordinatesFromJsonString(jsonNode.path("coordinates").asText());
+        game.getCurrentRound().makeAction(game.getCurrentRound().findPlayerByNickname(
+                jsonNode.path("player_nickname").asText()),
+                playerAction,
+                coordinates.getKey(),
+                coordinates.getValue()
+                );
     }
 
     private void sendPlayerInformationToServer() throws JsonProcessingException {
@@ -87,6 +103,24 @@ public class RoundServerClient extends WebSocketClient {
 
     private void updatePlayerInformation(String playerJsonStr) throws JsonProcessingException {
         game.getCurrentRound().updatePlayerInfo(JsonParser.makePlayerFromJsonString(playerJsonStr));
+    }
+
+    public void sendMoveInformationToServer(PlayerAction action, int moveRow, char moveCol) {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", CommandToServer.ProcessMove.getStringOfCommand());
+        try {
+            jsonPackage.put("object", JsonParser.createJsonStringFromMovementInfo(
+                    game.getCurrentRound().findPlayerByUser(game.getUser()),
+                    action,
+                    moveRow,
+                    moveCol
+            ));
+            send(objectMapper.writeValueAsString(jsonPackage));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void notifyServerOfReadiness() {

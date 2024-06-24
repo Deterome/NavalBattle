@@ -1,15 +1,16 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates.RoundView;
 
-import NavalBattleGame.GameUsers.CoordinatesParser;
 import NavalBattleGame.GameUsers.NavalBattleAI;
-import NavalBattleGame.GameUsers.PlayerActions;
+import NavalBattleGame.GameUsers.PlayerAction;
 import NavalBattleGame.NavalBattleGame;
+import NavalBattleGame.ToolsForGame.JsonParser;
 import NavalBattleGameViewer.InputListener;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleButton;
 import NavalBattleGameViewer.UI.ConsoleUI.FieldPrinter;
 import NavalBattleGameViewer.UI.ConsoleUI.PrintConstructor;
 import NavalBattleGameViewer.UI.Printable;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.Optional;
 
@@ -33,7 +34,7 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
             var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
 
             var coordinates = NavalBattleAI.analyseFieldAndGetAttackCoords(game.getCurrentRound().getNextPlayerToAct().getField());
-            game.getCurrentRound().makeAction(player, PlayerActions.Attack, CoordinatesParser.makeJsonStringOfAttackAction(coordinates.getKey(), coordinates.getValue()));
+            game.getCurrentRound().makeAction(player, PlayerAction.Attack, coordinates.getKey(), coordinates.getValue());
         });
         aiHelpButton.setPosition(90, 0);
         UIElementsMap.put(MatchMenuElements.AIHelpButton, aiHelpButton);
@@ -47,10 +48,19 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
             default -> {
                 var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
 
-                var coordinates = Optional.ofNullable(CoordinatesParser.getCoordinatesByString(enteredText));
-                coordinates.ifPresent(coordinate -> {
-                    game.getCurrentRound().makeAction(player, PlayerActions.Attack, CoordinatesParser.makeJsonStringOfAttackAction(coordinate.getKey(), coordinate.getValue()));
-                });
+                try {
+                    Optional<String> coordinatesJsonStr = Optional.ofNullable(JsonParser.createJsonStringFromCoordinatesString(enteredText));
+                    coordinatesJsonStr.ifPresent(coordsJsonStr -> {
+                        try {
+                            var coordinates = JsonParser.makeCoordinatesFromJsonString(coordsJsonStr);
+                            game.getCurrentRound().makeAction(player, PlayerAction.Attack, coordinates.getKey(), coordinates.getValue());
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 

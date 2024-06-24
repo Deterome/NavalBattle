@@ -4,12 +4,6 @@ import NavalBattleGame.GameEnums.ShipOrientation;
 
 import java.util.*;
 
-enum AttackResult {
-    Miss,
-    Hit,
-    Destroyed
-}
-
 public class SeaField {
 
     public SeaField() {}
@@ -174,18 +168,17 @@ public class SeaField {
         }
     }
 
-    public void attackCell(int row, char col) {
+    public AttackResult attackCell(int row, char col) {
         if (!seaTable.containsKey(row) || !seaTable.getOrDefault(row, new HashMap<>()).containsKey(col)) {
-            return;
+            return AttackResult.Miss;
         }
 
         var currentCell = seaTable.get(row).get(col);
-        switch (currentCell.attackCell()) {
-            case Destroyed -> {
-                bombShip(currentCell.ship, row, col);
-            }
+        var attackResult = currentCell.attackCell();
+        if (attackResult == AttackResult.Destroyed) {
+            bombShip(currentCell.ship, row, col);
         }
-
+        return attackResult;
     }
 
     public ArrayList<Ship> makeShipsListFromField() {

@@ -1,15 +1,18 @@
 package NavalBattleGame.GameRound;
 
+import NavalBattleGame.GameElements.AttackResult;
 import NavalBattleGame.GameElements.SeaField;
 import NavalBattleGame.GameElements.Ship;
 import NavalBattleGame.GameEnums.GameEvent;
 import NavalBattleGame.GameUsers.*;
 import NavalBattleGame.NavalBattleGame;
+import NavalBattleGame.ToolsForGame.JsonParser;
 import StateMachine.StateMachine;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Round extends StateMachine<RoundStates, RoundEvents> {
 
@@ -79,31 +82,46 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         return new ArrayList<>(this.players.values());
     }
 
-    public void makeAction(Player player, PlayerActions playerActions, String jsonStringWithCommand) {
+    public void makeAction(Player player, PlayerAction playerAction, int row, char col) {
         if (isPlayerActing(player)) {
-            switch (playerActions) {
+            switch (playerAction) {
                 case Attack -> {
-                    var attackCoords = CoordinatesParser.getCoordinatesByJson(jsonStringWithCommand);
-                    if (getNextPlayerToAct().getField().getSeaTable().get(attackCoords.getKey()) != null &&
-                            getNextPlayerToAct().getField().getSeaTable().get(attackCoords.getKey()).get(attackCoords.getValue()) != null &&
-                            !getNextPlayerToAct().getField().getSeaTable().get(attackCoords.getKey()).get(attackCoords.getValue()).isShelled()
-                    ) {
-                        player.attackPlayer(getNextPlayerToAct(), attackCoords.getKey(), attackCoords.getValue());
-                        if (!getNextPlayerToAct().getField().getSeaTable().get(attackCoords.getKey()).get(attackCoords.getValue()).hasShip()) {
-                            switchAttackingPlayer();
-                        } else {
-                            if (getActingPlayer() instanceof Bot) {
-                                ((Bot)getActingPlayer()).attack();
-                            }
-                        }
-                    }
-
-                    for (var checkingPlayer: players.values()) {
-                        if (didPlayerLose(checkingPlayer)) {
-                            processEvent(RoundEvents.MatchEnd);
-                        }
-                    }
+                        processAttack(player, row, col);
                 }
+            }
+            if (player.getNickname().equals(
+                    game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname())
+            ) {
+                if (isLanOpened()) {
+                    try {
+                        roundServer.notifyClientsAboutPlayerMovement(player, JsonParser.createJsonStringFromMovementInfo(player, playerAction, row, col));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else if (game.isConnectedToRoundServer()) {
+                    game.getConnectionToRound().sendMoveInformationToServer(playerAction, row, col);
+                }
+            }
+        }
+    }
+
+    private void processAttack(Player attackingPlayer, int attackRow, char attackCol) {
+        if (getNextPlayerToAct().getField().getSeaTable().get(attackRow) != null &&
+                getNextPlayerToAct().getField().getSeaTable().get(attackRow).get(attackCol) != null &&
+                !getNextPlayerToAct().getField().getSeaTable().get(attackRow).get(attackCol).isShelled()
+        ) {
+            var attackResult = attackingPlayer.attackPlayer(getNextPlayerToAct(), attackRow, attackCol);
+            if (attackResult == AttackResult.Miss) {
+                switchAttackingPlayer();
+            } else {
+                if (getActingPlayer() instanceof Bot) {
+                    ((Bot)getActingPlayer()).attack();
+                }
+            }
+        }
+        for (var checkingPlayer: players.values()) {
+            if (didPlayerLose(checkingPlayer)) {
+                processEvent(RoundEvents.MatchEnd);
             }
         }
     }
