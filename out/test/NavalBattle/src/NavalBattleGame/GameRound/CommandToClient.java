@@ -3,7 +3,9 @@ package NavalBattleGame.GameRound;
 public enum CommandToClient {
     SetUsersList ("SetUsersList"),
     StopWaitingForPlayers ("StopWaitingForPlayers"),
-    StartMatch ("StartMatch");
+    StartMatch ("StartMatch"),
+    SendPlayerInformationToServer ("SendPlayerInformationToServer"),
+    UpdatePlayerInformation("UpdatePlayerInformation");
 
 
     CommandToClient(String commandString) {

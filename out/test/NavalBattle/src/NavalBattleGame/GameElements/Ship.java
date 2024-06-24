@@ -4,6 +4,14 @@ import java.util.ArrayList;
 
 public class Ship  {
 
+    public Ship() {
+        this(0);
+    }
+
+    public Ship (Ship ship) {
+        this(ship.countShipSize());
+    }
+
     public Ship(int shipSize) {
         this.parts = new ArrayList<>();
         for (int partId = 0; partId < shipSize; partId++) {
@@ -11,7 +19,7 @@ public class Ship  {
         }
     }
 
-    public boolean isHited() {
+    public boolean checkIsShipHited() {
         for (var part: parts) {
             if (part.isDestroyed()) return true;
         }
@@ -22,11 +30,11 @@ public class Ship  {
         return parts;
     }
 
-    public Part getPart(int partId) {
+    public Part partAtId(int partId) {
         return parts.get(partId);
     }
 
-    public int getShipSize() {
+    public int countShipSize() {
         return parts.size();
     }
 
@@ -34,22 +42,22 @@ public class Ship  {
         Part attackedPart = parts.get(partId);
         if (attackedPart != null) {
             attackedPart.getDamage();
-            destroyed = true;
-            for (var part: parts) {
-                if (!part.isDestroyed()) {
-                    destroyed = false;
-                    break;
-                }
-            }
         }
     }
 
-    ArrayList<Part> parts = new ArrayList<>();
-
-    public boolean isDestroyed() {
-        return destroyed;
+    public boolean checkIsShipDestroyed() {
+        for (var part: parts) {
+            if (!part.isDestroyed()) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    private boolean destroyed = false;
+    public void setParts(ArrayList<Part> parts) {
+        this.parts = parts;
+    }
+
+    ArrayList<Part> parts;
 
 }

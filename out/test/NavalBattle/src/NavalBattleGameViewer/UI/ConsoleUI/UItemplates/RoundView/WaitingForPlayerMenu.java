@@ -137,7 +137,5 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
                 }
             }
         }
-
     }
-
 }

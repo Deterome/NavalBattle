@@ -1,6 +1,7 @@
 package NavalBattleGame.GameElements;
 
 public class SeaCellInfo {
+
     public Ship getShip() {
         return ship;
     }
@@ -8,8 +9,6 @@ public class SeaCellInfo {
     public boolean hasShip() {
         return ship != null;
     }
-
-    Ship ship;
 
     public int getShipPartId() {
         return shipPartId;
@@ -24,7 +23,7 @@ public class SeaCellInfo {
             this.shelled = true;
             if (hasShip()) {
                 ship.GetDamageAtPart(shipPartId);
-                if (ship.isDestroyed()) {
+                if (ship.checkIsShipDestroyed()) {
                     return AttackResult.Destroyed;
                 } else {
                     return AttackResult.Hit;
@@ -34,6 +33,12 @@ public class SeaCellInfo {
         return AttackResult.Miss;
     }
 
+
+    public void setShip(Ship ship) {
+        this.ship = ship;
+    }
+
+    Ship ship;
     boolean shelled = false;
     int shipPartId;
 }

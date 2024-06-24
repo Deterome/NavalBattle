@@ -2,6 +2,7 @@ package NavalBattleGame.GameRound;
 
 import NavalBattleGame.GameUsers.Player;
 import NavalBattleGame.GameUsers.User;
+import NavalBattleGame.ToolsForGame.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +31,11 @@ public class RoundServer extends WebSocketServer {
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
         // обработка отключения пользователя
         round.disconnectUserFromRound(clients.get(conn));
-        sendRoundInformationToClients();
+        try {
+            sendRoundInformationToClients();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -49,18 +54,48 @@ public class RoundServer extends WebSocketServer {
                 case PlayerIsReady -> {
                     setPlayerIsReady(jsonNode.path("object").asText());
                 }
+                case UpdatePlayerInformation -> {
+                    updatePlayerInformation(jsonNode.path("object").asText());
+                }
             }
+
+            sendRoundInformationToClients();
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-
-        sendRoundInformationToClients();
     }
 
-    void notifyPlayersToStartMatch() {
+    private void updatePlayerInformation(String playerJsonStr) throws JsonProcessingException {
+        var player = JsonParser.makePlayerFromJsonString(playerJsonStr);
+        round.updatePlayerInfo(player);
+
+        sendPlayerInformationToClients(player);
+    }
+
+    private void sendPlayerInformationToClients(Player player) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", CommandToClient.UpdatePlayerInformation.getStringOfCommand());
+        jsonPackage.put("object", JsonParser.createJsonStringFromPlayer(player));
+
+        for (var client: clients.entrySet()) {
+            if (!round.findPlayerByUser(client.getValue()).getNickname().equals(player.getNickname())) {
+                client.getKey().send(objectMapper.writeValueAsString(jsonPackage));
+            }
+        }
+    }
+
+    public void sendPlayersInformationToClients() throws JsonProcessingException {
+        for (var player: round.players.values()) {
+            sendPlayerInformationToClients(player);
+        }
+    }
+
+    public void requestPlayersInformationFromClients() {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode jsonPackage = objectMapper.createObjectNode();
-        jsonPackage.put("command", CommandToClient.StartMatch.getStringOfCommand());
+        jsonPackage.put("command", CommandToClient.SendPlayerInformationToServer.getStringOfCommand());
         String jsonPackageStr = "";
         try {
             jsonPackageStr = objectMapper.writeValueAsString(jsonPackage);
@@ -70,19 +105,27 @@ public class RoundServer extends WebSocketServer {
         sendPackageToClients(jsonPackageStr);
     }
 
-    void sendPlayersInformationToClients() {
-
+    void notifyPlayersToStartMatch() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", CommandToClient.StartMatch.getStringOfCommand());
+        try {
+            sendPackageToClients(objectMapper.writeValueAsString(jsonPackage));
+            sendPlayersInformationToClients();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     void setPlayerIsReady(String playerJsonStr) {
-        Player player = round.getPlayerByNickname(playerJsonStr);
+        Player player = round.findPlayerByNickname(playerJsonStr);
 
         if (player != null) round.setPlayerReadiness(player, true);
     }
 
     void createUser(WebSocket conn, String userJsonStr) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        User newUser = objectMapper.readValue(userJsonStr, User.class);
+        var newUser = JsonParser.makeUserFromJsonString(userJsonStr);
+
         clients.put(conn, newUser);
         round.connectUserToRound(newUser);
     }
@@ -98,36 +141,24 @@ public class RoundServer extends WebSocketServer {
         // скинуть порт, на котором был запущен сервер
     }
 
-    private void sendRoundInformationToClients() {
+    private void sendRoundInformationToClients() throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
 
-        String usersMapJsonStr = "";
         ObjectNode jsonObject = objectMapper.createObjectNode();
-        var joinedUsers = round.getJoinedUsers();
-        try {
-            for (var entry: joinedUsers.entrySet()) {
-                String user = objectMapper.writeValueAsString(entry.getKey());
-                String userRoles = objectMapper.writeValueAsString(entry.getValue());
 
-                jsonObject.put(user, userRoles);
-            }
-            usersMapJsonStr = objectMapper.writeValueAsString(jsonObject);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        var joinedUsers = round.getJoinedUsers();
+        for (var entry: joinedUsers.entrySet()) {
+            String user = objectMapper.writeValueAsString(entry.getKey());
+            String userRoles = objectMapper.writeValueAsString(entry.getValue());
+
+            jsonObject.put(user, userRoles);
         }
+
         ObjectNode jsonPackage = objectMapper.createObjectNode();
         jsonPackage.put("command", CommandToClient.SetUsersList.getStringOfCommand());
-        jsonPackage.put("object", usersMapJsonStr);
+        jsonPackage.put("object", objectMapper.writeValueAsString(jsonObject));
 
-        String jsonStr = "";
-
-        try {
-            jsonStr = objectMapper.writeValueAsString(jsonPackage);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        sendPackageToClients(jsonStr);
+        sendPackageToClients(objectMapper.writeValueAsString(jsonPackage));
     }
 
     public void notifyClientsToStopWaitingPlayers() {

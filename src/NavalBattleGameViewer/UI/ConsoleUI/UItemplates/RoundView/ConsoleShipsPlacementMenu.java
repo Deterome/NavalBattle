@@ -35,7 +35,7 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
 
     @Override
     public String getPrintableString() {
-        shipsPlaced = game.getCurrentRound().getPlayerByUser(game.getUser()).getAvailableShips() == null;
+        shipsPlaced = game.getCurrentRound().findPlayerByUser(game.getUser()).getAvailableShips() == null;
 
         PrintConstructor printConstructor = new PrintConstructor();
         printConstructor.setSize(canvasSize.x, canvasSize.y);
@@ -53,7 +53,7 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
 
     public void addReadyButtonToPrint(PrintConstructor printConstructor) {
         var currentRound = game.getCurrentRound();
-        if (!currentRound.isPlayerReady(currentRound.getPlayerByUser(game.getUser()))) {
+        if (!currentRound.isPlayerReady(currentRound.findPlayerByUser(game.getUser()))) {
             printConstructor.putTextInPosition("Ready [ready]", 57, 23 );
         }
     }
@@ -62,7 +62,7 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
     public void onInput(String enteredText) {
         if (shipsPlaced) {
             if ("ready".equals(enteredText)) {
-                game.getCurrentRound().setPlayerReadiness(game.getCurrentRound().getPlayerByUser(game.getUser()), true);
+                game.getCurrentRound().setPlayerReadiness(game.getCurrentRound().findPlayerByUser(game.getUser()), true);
                 if (game.isConnectedToRoundServer()) {
                     game.getConnectionToRound().notifyServerOfReadiness();
                 }
@@ -71,15 +71,15 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
             if ("rot".equals(enteredText)) {
                 currentShipOrientation = currentShipOrientation.nextOrientation();
             } else if ("auto".equals(enteredText)) {
-                var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
+                var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
                 NavalBattleAI.automaticPlacementOfShipsToField(player.getField(), player.getAvailableShips());
                 player.setAvailableShips(null);
             } else {
-                var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
+                var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
 
                 var coordinates = Optional.ofNullable(CoordinatesParser.getCoordinatesByString(enteredText));
                 coordinates.ifPresent(coordinate -> {
-                    if (player.getField().tryPlaceShipInCells(player.getFirstAvailableShip(), currentShipOrientation,coordinate.getKey(), coordinate.getValue())) {
+                    if (player.getField().tryPlaceShipInCells(player.findFirstAvailableShip(), currentShipOrientation,coordinate.getKey(), coordinate.getValue())) {
                         player.pickFirstAvailableShip();
                     }
                 });
@@ -88,13 +88,13 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
     }
 
     private void addFieldToPrint(PrintConstructor printConstructor) {
-        var field = game.getCurrentRound().getPlayerByUser(game.getUser()).getField();
+        var field = game.getCurrentRound().findPlayerByUser(game.getUser()).getField();
 
         printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(field), 41, 2);
     }
 
     private void addAvailableShipsToPrint(PrintConstructor printConstructor) {
-        var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
+        var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
         var availableShips = player.getAvailableShips();
 
 
@@ -119,7 +119,7 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
 
         printConstructor.putTextInPosition("Enter coordinates or rotate ship [rot]. Automatic placement [auto]", 37, 20);
 
-        var pickedShipParts = player.getFirstAvailableShip().getParts();
+        var pickedShipParts = player.findFirstAvailableShip().getParts();
         StringBuilder pickedShipStr = new StringBuilder();
 
         for (int partId = 0; partId < pickedShipParts.size(); partId++) {

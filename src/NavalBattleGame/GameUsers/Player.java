@@ -9,12 +9,15 @@ import java.util.Optional;
 
 public class Player {
 
+    public Player() {
+        this.nickname = "noname";
+    }
+
     public Player(String nickname) {
         this.nickname = nickname;
     }
 
-
-    public Ship getFirstAvailableShip() {
+    public Ship findFirstAvailableShip() {
         return availableShips.keySet().stream()
                 .findFirst()
                 .flatMap(shipSize -> availableShips.get(shipSize).stream().findFirst())
@@ -22,16 +25,16 @@ public class Player {
     }
 
     public Ship pickFirstAvailableShip() {
-        Optional<Ship> pickedShip = Optional.ofNullable(getFirstAvailableShip());
+        Optional<Ship> pickedShip = Optional.ofNullable(findFirstAvailableShip());
         pickedShip.ifPresent(this::removeAvailableShip);
         return pickedShip.orElse(null);
     }
 
     public void removeAvailableShip(Ship shipToDelete) {
-        Optional.ofNullable(availableShips.get(shipToDelete.getShipSize())).ifPresent(ships -> {
+        Optional.ofNullable(availableShips.get(shipToDelete.countShipSize())).ifPresent(ships -> {
             ships.remove(shipToDelete);
             if (ships.isEmpty()) {
-                availableShips.remove(shipToDelete.getShipSize());
+                availableShips.remove(shipToDelete.countShipSize());
             }
         });
     }
@@ -40,17 +43,13 @@ public class Player {
         player.getField().attackCell(row, col);
     }
 
-    public void addEnemy(Player player) {
-        enemiesFields.put(player, player.field);
-    }
-
     public void addShips(Ship ship, int countOfShips) {
-        int shipSize = ship.getShipSize();
+        int shipSize = ship.countShipSize();
         if (!availableShips.containsKey(shipSize)) {
             availableShips.put(shipSize, new ArrayList<>());
         }
         for (int shipId = 0; shipId < countOfShips; shipId++) {
-            availableShips.get(shipSize).add(new Ship(ship.getShipSize()));
+            availableShips.get(shipSize).add(new Ship(ship.countShipSize()));
         }
     }
 
@@ -70,22 +69,21 @@ public class Player {
         return availableShips;
     }
 
-    private SeaField field;
-
     public String getNickname() {
         return nickname;
     }
 
-    public int getCountOfRemainingShips() {
+    public int countRemainingShips() {
         int remainingShipsCount = 0;
-        for (var ship: field.getShipsListFromField()) {
-            if (!ship.isDestroyed()) remainingShipsCount++;
+        for (var ship: field.makeShipsListFromField()) {
+            if (!ship.checkIsShipDestroyed()) remainingShipsCount++;
         }
         return remainingShipsCount;
     }
 
-    HashMap<Integer, ArrayList<Ship>> availableShips  = new HashMap<>();
-    HashMap<Player, SeaField> enemiesFields = new HashMap<>();
 
-    String nickname = "noname";
+    private SeaField field;
+    HashMap<Integer, ArrayList<Ship>> availableShips  = new HashMap<>();
+    String nickname;
+
 }

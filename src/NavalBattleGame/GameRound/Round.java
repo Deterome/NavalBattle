@@ -6,6 +6,7 @@ import NavalBattleGame.GameEnums.GameEvent;
 import NavalBattleGame.GameUsers.*;
 import NavalBattleGame.NavalBattleGame;
 import StateMachine.StateMachine;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,7 +63,7 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     }
 
     boolean tryAddPlayer(User user) {
-        if (getCountOfUsersWithRole(UserRole.Player) < maxCountOfPlayers) {
+        if (countOfUsersWithRole(UserRole.Player) < maxCountOfPlayers) {
             var userRoles = joinedUsers.get(user);
             if (userRoles.contains(UserRole.Watcher)) {
                 deleteUserRole(user, UserRole.Watcher);
@@ -74,7 +75,7 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         }
     }
 
-    public ArrayList<Player> getPlayersList() {
+    public ArrayList<Player> createPlayersList() {
         return new ArrayList<>(this.players.values());
     }
 
@@ -108,7 +109,7 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     }
 
     private boolean didPlayerLose(Player player) {
-        return player.getCountOfRemainingShips() == 0;
+        return player.countRemainingShips() == 0;
     }
 
     public Player getNextPlayerToAct() {
@@ -191,11 +192,11 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         }
     }
 
-    public Player getPlayerByUser(User user) {
+    public Player findPlayerByUser(User user) {
         return players.get(user.getName());
     }
 
-    public int getCountOfUsersWithRole(UserRole role) {
+    public int countOfUsersWithRole(UserRole role) {
         int countOfUsers = 0;
 
         for (var userSet: joinedUsers.entrySet()) {
@@ -218,11 +219,19 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
         return false;
     }
 
-    public Player getPlayerByNickname(String nickName) {
+    public Player findPlayerByNickname(String nickName) {
         for (var player: players.values()) {
             if (player.getNickname().equals(nickName)) return player;
         }
         return null;
+    }
+
+    public void updatePlayerInfo(Player newPlayerInfo) {
+        for (var playersEntry: players.entrySet()) {
+            if (playersEntry.getValue().getNickname().equals(newPlayerInfo.getNickname())) {
+                players.put(playersEntry.getKey(), newPlayerInfo);
+            }
+        }
     }
 
     public void giveUserRole(User user, UserRole newRole) {
@@ -265,6 +274,7 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     private void onMatchStart() {
         if (isLanOpened()) {
             roundServer.notifyPlayersToStartMatch();
+            roundServer.requestPlayersInformationFromClients();
         }
     }
 
@@ -333,6 +343,7 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
             }
         }
     }
+
 
     RoundServer roundServer;
     NavalBattleGame game;

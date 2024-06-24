@@ -30,7 +30,7 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
     private void initializeElements() {
         var aiHelpButton = new ConsoleButton("AI help [help]", 10,1);
         aiHelpButton.addListener(() -> {
-            var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
+            var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
 
             var coordinates = NavalBattleAI.analyseFieldAndGetAttackCoords(game.getCurrentRound().getNextPlayerToAct().getField());
             game.getCurrentRound().makeAction(player, PlayerActions.Attack, CoordinatesParser.makeJsonStringOfAttackAction(coordinates.getKey(), coordinates.getValue()));
@@ -45,7 +45,7 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
         switch (enteredText) {
             case "help" -> pressButton(MatchMenuElements.AIHelpButton);
             default -> {
-                var player =  game.getCurrentRound().getPlayerByUser(game.getUser());
+                var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
 
                 var coordinates = Optional.ofNullable(CoordinatesParser.getCoordinatesByString(enteredText));
                 coordinates.ifPresent(coordinate -> {
@@ -68,7 +68,7 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
     }
 
     private void addFieldToPrint(PrintConstructor printConstructor) {
-        var players = game.getCurrentRound().getPlayersList();
+        var players = game.getCurrentRound().createPlayersList();
         int printXPos = 5;
         int printXOffset = 45;
         for (var player: players) {
@@ -77,9 +77,9 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
                 playerActing += "acting-> ";
             }
             printConstructor.putTextInPosition(playerActing + player.getNickname(), printXPos + 15 - playerActing.length(), 2);
-            printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField(), game.getCurrentRound().getPlayerByUser(game.getUser()) != player), printXPos, 3);
-//            printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField()), printXPos, 2);
-            printConstructor.putTextInPosition("Remaining ships in field: " + player.getCountOfRemainingShips(),printXPos + 5, 22);
+            printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField(), game.getCurrentRound().findPlayerByUser(game.getUser()) != player), printXPos, 3);
+//            printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField()), printXPos, 3);
+            printConstructor.putTextInPosition("Remaining ships in field: " + player.countRemainingShips(),printXPos + 5, 22);
             printXPos += printXOffset;
         }
     }

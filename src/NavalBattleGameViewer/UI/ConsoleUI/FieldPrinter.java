@@ -14,8 +14,8 @@ public class FieldPrinter {
     public static String getFieldPrint(SeaField field, boolean hideShips) {
 
 
-        var colsKeys = field.getColsKeys();
-        var rowsKeys = field.getRowsKeys();
+        var colsKeys = field.makeColsKeysList();
+        var rowsKeys = field.makeRowsKeysList();
         StringBuilder fieldStr = new StringBuilder();
 
         int maxDigitsCountOfRowKey = rowsKeys.getLast().toString().length();
@@ -39,10 +39,10 @@ public class FieldPrinter {
                         }
                     }
                 } else {
-                    if (cellInfo.getShip().isDestroyed()) {
+                    if (cellInfo.getShip().checkIsShipDestroyed()) {
                         fieldStr.append(String.valueOf(DESTROYED_SHIP_SYMBOL).repeat(CELL_WIDTH));
                     } else {
-                        if (cellInfo.getShip().getPart(cellInfo.getShipPartId()).isDestroyed()) {
+                        if (cellInfo.getShip().partAtId(cellInfo.getShipPartId()).isDestroyed()) {
                             fieldStr.append(String.valueOf(DESTROYED_SHIP_PART_SYMBOL).repeat(CELL_WIDTH));
                         } else {
                             if (!hideShips) {

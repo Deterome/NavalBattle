@@ -1,8 +1,10 @@
 package NavalBattleGame.GameRound;
 
 import NavalBattleGame.GameEnums.GameEvent;
+import NavalBattleGame.GameUsers.Player;
 import NavalBattleGame.GameUsers.User;
 import NavalBattleGame.NavalBattleGame;
+import NavalBattleGame.ToolsForGame.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,28 +26,22 @@ public class RoundServerClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshake) {
+        try {
+            sendUserInformationToServer(game.getUser());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void sendUserInformationToServer(User user) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
 
-        String userJsonStr = "";
-
-        try {
-            userJsonStr = objectMapper.writeValueAsString(game.getUser());
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
         ObjectNode jsonObject = objectMapper.createObjectNode();;
         jsonObject.put("command", CommandToServer.CreateUser.getStringOfCommand());
-        jsonObject.put("object", userJsonStr);
+        jsonObject.put("object", JsonParser.createJsonStringFromUser(user));
 
-        String jsonStr = "";
+        send(objectMapper.writeValueAsString(jsonObject));
 
-        try {
-            jsonStr = objectMapper.writeValueAsString(jsonObject);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        send(jsonStr);
     }
 
     @Override
@@ -67,24 +63,44 @@ public class RoundServerClient extends WebSocketClient {
                 case StartMatch -> {
                     this.game.getCurrentRound().processEvent(RoundEvents.StartMatch);
                 }
+                case SendPlayerInformationToServer -> {
+                    sendPlayerInformationToServer();
+                }
+                case UpdatePlayerInformation -> {
+                    updatePlayerInformation(jsonNode.path("object").asText());
+                }
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
+    private void sendPlayerInformationToServer() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", CommandToServer.UpdatePlayerInformation.getStringOfCommand());
+        jsonPackage.put("object", JsonParser.createJsonStringFromPlayer(game.getCurrentRound().findPlayerByUser(game.getUser())));
+
+        send(objectMapper.writeValueAsString(jsonPackage));
+    }
+
+    private void updatePlayerInformation(String playerJsonStr) throws JsonProcessingException {
+        game.getCurrentRound().updatePlayerInfo(JsonParser.makePlayerFromJsonString(playerJsonStr));
+    }
+
     public void notifyServerOfReadiness() {
         ObjectMapper objectMapper = new ObjectMapper();
+
         ObjectNode jsonPackage = objectMapper.createObjectNode();
         jsonPackage.put("command", CommandToServer.PlayerIsReady.getStringOfCommand());
-        jsonPackage.put("object", game.getCurrentRound().getPlayerByUser(game.getUser()).getNickname());
-        String jsonPackageStr = "";
+        jsonPackage.put("object", game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname());
+
         try {
-            jsonPackageStr = objectMapper.writeValueAsString(jsonPackage);
+            send(objectMapper.writeValueAsString(jsonPackage));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        send(jsonPackageStr);
     }
 
     private void processSettingUserList(String jsonObjectStr) throws JsonProcessingException {
@@ -98,7 +114,6 @@ public class RoundServerClient extends WebSocketClient {
             for (var role: rolesStrings) {
                 roles.add(UserRole.getCommandByString(role));
             }
-
             usersMap.put(user, roles);
         }
 

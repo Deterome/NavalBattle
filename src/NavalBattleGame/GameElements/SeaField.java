@@ -12,6 +12,8 @@ enum AttackResult {
 
 public class SeaField {
 
+    public SeaField() {}
+
     public SeaField(int width, int height) {
         this.width = width;
         this.height = height;
@@ -33,8 +35,6 @@ public class SeaField {
         return seaTable;
     }
 
-    private HashMap<Integer, HashMap<Character, SeaCellInfo>> seaTable = new HashMap<Integer, HashMap<Character, SeaCellInfo>>();
-
     public boolean tryPlaceShipInCells(Ship ship, ShipOrientation shipOrientation, int row, char col) {
         int colStep = 0, rowStep = 0;
         switch (shipOrientation) {
@@ -45,7 +45,7 @@ public class SeaField {
         }
         char currCol = col;
         int currRow = row;
-        for (int shipPartId = 0; shipPartId < ship.getShipSize(); shipPartId++,
+        for (int shipPartId = 0; shipPartId < ship.countShipSize(); shipPartId++,
                 currCol = (char)(currCol + colStep),
                 currRow += rowStep) {
             if (!checkIsCellAvailable(currRow, currCol)) {
@@ -55,7 +55,7 @@ public class SeaField {
 
         currCol = col;
         currRow = row;
-        for (int shipPartId = 0; shipPartId < ship.getShipSize(); shipPartId++,
+        for (int shipPartId = 0; shipPartId < ship.countShipSize(); shipPartId++,
                 currCol = (char)(currCol + colStep),
                 currRow += rowStep) {
             seaTable.get(currRow).get(currCol).ship = ship;
@@ -143,7 +143,7 @@ public class SeaField {
         if (shipBegin == null) return;
 
         int[] steps = {-1, 1};
-        if (ship.getShipSize() == 1) {
+        if (ship.countShipSize() == 1) {
             bombCell(explosionStartRow, explosionStartCol);
         } else {
             for (var currStep: steps) {
@@ -188,7 +188,7 @@ public class SeaField {
 
     }
 
-    public ArrayList<Ship> getShipsListFromField() {
+    public ArrayList<Ship> makeShipsListFromField() {
         HashSet<Ship> shipSet = new HashSet<>();
         for (var rowEntry: seaTable.entrySet()) {
             for (var colEntry: rowEntry.getValue().entrySet()) {
@@ -200,16 +200,20 @@ public class SeaField {
         return new ArrayList<>(shipSet);
     }
 
-    public ArrayList<Character> getColsKeys() {
+    public ArrayList<Character> makeColsKeysList() {
         return new ArrayList<>(seaTable.get(FIRST_NUMBER).keySet());
     }
 
-    public ArrayList<Integer> getRowsKeys() {
+    public ArrayList<Integer> makeRowsKeysList() {
         return new ArrayList<>(seaTable.keySet());
     }
 
-    final char FIRST_ALPHABET_SYMBOL = 'A';
-    final int FIRST_NUMBER = 1;
+    public void setSeaTable(HashMap<Integer, HashMap<Character, SeaCellInfo>> seaTable) {
+        this.seaTable = seaTable;
+    }
+
+    static final char FIRST_ALPHABET_SYMBOL = 'A';
+    static final int FIRST_NUMBER = 1;
 
     public int getWidth() {
         return width;
@@ -219,7 +223,7 @@ public class SeaField {
         return height;
     }
 
+    private HashMap<Integer, HashMap<Character, SeaCellInfo>> seaTable = new HashMap<Integer, HashMap<Character, SeaCellInfo>>();
     private int width;
     private int height;
-
 }

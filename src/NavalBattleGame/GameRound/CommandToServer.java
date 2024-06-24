@@ -3,7 +3,8 @@ package NavalBattleGame.GameRound;
 public enum CommandToServer {
 
     CreateUser ("CreateUser"),
-    PlayerIsReady ("PlayerIsReady");
+    PlayerIsReady ("PlayerIsReady"),
+    UpdatePlayerInformation("LoadPlayerInformation");
 
     CommandToServer(String commandString) {
         this.commandString = commandString;

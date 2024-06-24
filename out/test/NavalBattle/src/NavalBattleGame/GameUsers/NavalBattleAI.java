@@ -17,8 +17,8 @@ public class NavalBattleAI {
     static public void automaticPlacementOfShipsToField(SeaField field, HashMap<Integer, ArrayList<Ship>> ships) {
         if (ships == null) return;
 
-        ArrayList<Integer> rows = field.getRowsKeys();
-        ArrayList<Character> cols = field.getColsKeys();
+        ArrayList<Integer> rows = field.makeRowsKeysList();
+        ArrayList<Character> cols = field.makeColsKeysList();
 
         for (var entry : ships.entrySet()) {
             for (Ship ship: entry.getValue()) {
@@ -60,7 +60,7 @@ public class NavalBattleAI {
             for (var colEntry: rowEntry.getValue().entrySet()) {
                 if (colEntry.getValue().isShelled() &&
                         colEntry.getValue().hasShip() &&
-                        !colEntry.getValue().getShip().isDestroyed()) {
+                        !colEntry.getValue().getShip().checkIsShipDestroyed()) {
                     return new AbstractMap.SimpleEntry<>(rowEntry.getKey(), colEntry.getKey());
                 }
             }
@@ -134,8 +134,8 @@ public class NavalBattleAI {
         if (field == null) return null;
         var seaTable = field.getSeaTable();
 
-        ArrayList<Integer> rows = field.getRowsKeys();
-        ArrayList<Character> cols = field.getColsKeys();
+        ArrayList<Integer> rows = field.makeRowsKeysList();
+        ArrayList<Character> cols = field.makeColsKeysList();
         int row;
         char col;
         do {
