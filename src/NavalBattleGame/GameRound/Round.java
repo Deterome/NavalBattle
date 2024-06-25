@@ -92,9 +92,9 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
                         processAttack(player, row, col);
                 }
             }
-            if (game.getCurrentRound().findPlayerByUser(game.getUser()) != null &&
-                    (player.getNickname().equals(game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname()) ||
-                    player instanceof Bot)
+            if ((game.getCurrentRound().findPlayerByUser(game.getUser()) != null &&
+                    player.getNickname().equals(game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname())) ||
+                    player instanceof Bot
             ) {
                 if (isLanOpened()) {
                     try {
