@@ -1,6 +1,6 @@
 package NavalBattleGameViewer;
 
-import NavalBattleGame.GameEnums.GameState;
+import NavalBattleGame.GameElements.GameEnums.GameState;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.UI.Canvas;
 import NavalBattleGameViewer.UI.ConsoleUI.UItemplates.ConsoleIntro;

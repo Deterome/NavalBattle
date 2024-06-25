@@ -3,9 +3,7 @@ package NavalBattleGameViewer.UI;
 import NavalBattleGameViewer.Coord2D;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 public abstract class Canvas<E extends Enum<E>> {
 
@@ -17,15 +15,15 @@ public abstract class Canvas<E extends Enum<E>> {
     public void setFocus(E element) {
         if (focusableElementsMap.containsKey(element)) {
             if (focusedElement != null) {
-                this.focusableElementsMap.get(focusedElement).processEvent(UIevents.ExitedArea);
+                this.focusableElementsMap.get(focusedElement).invokeEvent(UIevents.ExitedArea);
             }
             focusedElement = element;
-            this.focusableElementsMap.get(focusedElement).processEvent(UIevents.EnteredArea);
+            this.focusableElementsMap.get(focusedElement).invokeEvent(UIevents.EnteredArea);
         }
     }
 
     public void clearFocus() {
-        this.focusableElementsMap.get(focusedElement).processEvent(UIevents.ExitedArea);
+        this.focusableElementsMap.get(focusedElement).invokeEvent(UIevents.ExitedArea);
     }
 
     public ArrayList<UIElement> getUIElementsList() {

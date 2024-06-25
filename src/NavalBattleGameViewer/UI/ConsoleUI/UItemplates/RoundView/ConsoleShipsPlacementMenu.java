@@ -1,12 +1,11 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates.RoundView;
 
-import NavalBattleGame.GameEnums.ShipOrientation;
+import NavalBattleGame.GameElements.GameEnums.ShipOrientation;
 import NavalBattleGame.GameUsers.NavalBattleAI;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGame.ToolsForGame.JsonParser;
 import NavalBattleGameViewer.InputListener;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
-import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleTextBlock;
 import NavalBattleGameViewer.UI.ConsoleUI.FieldPrinter;
 import NavalBattleGameViewer.UI.ConsoleUI.PrintConstructor;
 import NavalBattleGameViewer.UI.Printable;
@@ -16,7 +15,6 @@ import java.util.Map;
 import java.util.Optional;
 
 enum ShipsPlacementMenuElements {
-    InfoText
 }
 
 public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuElements> implements Printable, InputListener {
@@ -25,32 +23,37 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
         super(width, height);
 
         this.game = game;
-
-        initializeElements();
     }
 
-    private void initializeElements() {
-        var infoText = new ConsoleTextBlock("To place the ship in a cell, enter the coordinates with the combined letter and cell number\nCoordinates of the ship starts at symbol 'O'\nInput example: A4", 10, 1);
-        infoText.setPosition(0,0);
-        this.UIElementsMap.put(ShipsPlacementMenuElements.InfoText, infoText);
-    }
 
     @Override
     public String getPrintableString() {
-        shipsPlaced = game.getCurrentRound().findPlayerByUser(game.getUser()).getAvailableShips() == null;
-
         PrintConstructor printConstructor = new PrintConstructor();
         printConstructor.setSize(canvasSize.x, canvasSize.y);
         printConstructor.putTextInPosition(super.getPrintableString(), 0, 0);
 
-        addFieldToPrint(printConstructor);
-        if (!shipsPlaced) {
-            addAvailableShipsToPrint(printConstructor);
+        if (game.getCurrentRound().findPlayerByUser(game.getUser()) != null) {
+            shipsPlaced = game.getCurrentRound().findPlayerByUser(game.getUser()).getAvailableShips() == null;
+            addCurrentPlayerFieldToPrint(printConstructor);
+            addInfoTextToPrint(printConstructor);
+            if (!shipsPlaced) {
+                addAvailableShipsToPrint(printConstructor);
+            } else {
+                addReadyButtonToPrint(printConstructor);
+            }
         } else {
-            addReadyButtonToPrint(printConstructor);
+            addWaitTextToPrint(printConstructor);
         }
 
         return printConstructor.getPrint();
+    }
+
+    public void addWaitTextToPrint (PrintConstructor printConstructor) {
+        printConstructor.putTextInPosition("Waiting for players place their ships", 45, 13);
+    }
+
+    public void addInfoTextToPrint (PrintConstructor printConstructor) {
+        printConstructor.putTextInPosition("To place the ship in a cell, enter the coordinates with the combined letter and cell number\nCoordinates of the ship starts at symbol 'O'\nInput example: A4", 0, 0);
     }
 
     public void addReadyButtonToPrint(PrintConstructor printConstructor) {
@@ -62,45 +65,47 @@ public class ConsoleShipsPlacementMenu extends ConsoleCanvas<ShipsPlacementMenuE
 
     @Override
     public void onInput(String enteredText) {
-        if (shipsPlaced) {
-            if ("ready".equals(enteredText)) {
-                game.getCurrentRound().setPlayerReadiness(game.getCurrentRound().findPlayerByUser(game.getUser()), true);
-                if (game.isConnectedToRoundServer()) {
-                    game.getConnectionToRound().notifyServerOfReadiness();
+        if (game.getCurrentRound().findPlayerByUser(game.getUser()) != null) {
+            if (shipsPlaced) {
+                if ("ready".equals(enteredText)) {
+                    game.getCurrentRound().setPlayerReadiness(game.getCurrentRound().findPlayerByUser(game.getUser()), true);
+                    if (game.isConnectedToRoundServer()) {
+                        game.getConnectionToRound().notifyServerOfReadiness();
+                    }
                 }
-            }
-        } else {
-            if ("rot".equals(enteredText)) {
-                currentShipOrientation = currentShipOrientation.nextOrientation();
-            } else if ("auto".equals(enteredText)) {
-                var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
-                NavalBattleAI.automaticPlacementOfShipsToField(player.getField(), player.getAvailableShips());
-                player.setAvailableShips(null);
             } else {
-                var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
+                if ("rot".equals(enteredText)) {
+                    currentShipOrientation = currentShipOrientation.nextOrientation();
+                } else if ("auto".equals(enteredText)) {
+                    var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
+                    NavalBattleAI.automaticPlacementOfShipsToField(player.getField(), player.getAvailableShips());
+                    player.setAvailableShips(null);
+                } else {
+                    var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
 
-                Optional<String> coordinatesJsonStr = null;
-                try {
-                    coordinatesJsonStr = Optional.ofNullable(JsonParser.createJsonStringFromCoordinatesString(enteredText));
-                    coordinatesJsonStr.ifPresent(coordinateJson -> {
-                        Map.Entry<Integer, Character> coordinates = null;
-                        try {
-                            coordinates = JsonParser.makeCoordinatesFromJsonString(coordinateJson);
-                            if (player.getField().tryPlaceShipInCells(player.findFirstAvailableShip(), currentShipOrientation,coordinates.getKey(), coordinates.getValue())) {
-                                player.pickFirstAvailableShip();
+                    Optional<String> coordinatesJsonStr = null;
+                    try {
+                        coordinatesJsonStr = Optional.ofNullable(JsonParser.createJsonStringFromCoordinatesString(enteredText));
+                        coordinatesJsonStr.ifPresent(coordinateJson -> {
+                            Map.Entry<Integer, Character> coordinates = null;
+                            try {
+                                coordinates = JsonParser.makeCoordinatesFromJsonString(coordinateJson);
+                                if (player.getField().tryPlaceShipInCells(player.findFirstAvailableShip(), currentShipOrientation,coordinates.getKey(), coordinates.getValue())) {
+                                    player.pickFirstAvailableShip();
+                                }
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
                             }
-                        } catch (JsonProcessingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                        });
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
     }
 
-    private void addFieldToPrint(PrintConstructor printConstructor) {
+    private void addCurrentPlayerFieldToPrint(PrintConstructor printConstructor) {
         var field = game.getCurrentRound().findPlayerByUser(game.getUser()).getField();
 
         printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(field), 41, 2);

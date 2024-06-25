@@ -1,5 +1,7 @@
 package NavalBattleGame.GameElements;
 
+import NavalBattleGame.GameElements.GameEnums.AttackResult;
+
 public class SeaCellInfo {
 
     public Ship getShip() {

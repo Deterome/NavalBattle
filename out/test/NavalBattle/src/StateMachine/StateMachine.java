@@ -1,5 +1,6 @@
 package StateMachine;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
@@ -17,20 +18,34 @@ public abstract class StateMachine<S extends Enum<S>, E extends Enum<E>> {
     // Обязательно к вызову перед завершением работы машины состояний
     public abstract void stopStateMachine();
 
-    public void processEvent(E event) {
-        if (transitionTable.containsKey(currentState) && transitionTable.get(currentState).containsKey(event)) {
-            var newState = transitionTable.get(currentState).get(event);
-            onStateChange(newState);
-            currentState = newState;
-        } else {
-            // Обработка некорректного события
-            handleInvalidEvent(event);
-        }
+    public void invokeEvent(E event) {
+        invokedEventsQueue.addLast(event);
+        processEvents();
     }
+
+    private void processEvents() {
+        if (!processingEvents) {
+            processingEvents = true;
+            while (!invokedEventsQueue.isEmpty()) {
+                E event = invokedEventsQueue.pollFirst();
+                if (transitionTable.containsKey(currentState) && transitionTable.get(currentState).containsKey(event)) {
+                    var newState = transitionTable.get(currentState).get(event);
+                    onStateChange(newState);
+                    currentState = newState;
+                } else {
+                    // Обработка некорректного события
+                    handleInvalidEvent(event);
+                }
+            }
+            processingEvents = false;
+        }
+
+    }
+
     // Метод для планирования события таймаута
     protected void scheduleTimeoutEvent(E event, long delay, TimeUnit unit) {
         scheduler.schedule(() -> {
-            processEvent(event);
+            invokeEvent(event);
         }, delay, unit);
     }
     // Метод для остановки таймера. Надо вызывать при закрытии машины состояний
@@ -59,6 +74,9 @@ public abstract class StateMachine<S extends Enum<S>, E extends Enum<E>> {
     protected ArrayList<S> states;
     protected ArrayList<E> events;
     protected HashMap<S, HashMap<E, S>> transitionTable = new HashMap<>();
+
+    private ArrayDeque<E> invokedEventsQueue = new ArrayDeque<>();
+    private boolean processingEvents = false;
 
     protected S currentState;
     private ScheduledExecutorService scheduler;

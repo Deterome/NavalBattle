@@ -1,6 +1,7 @@
 package NavalBattleGame.GameElements;
 
-import NavalBattleGame.GameEnums.ShipOrientation;
+import NavalBattleGame.GameElements.GameEnums.AttackResult;
+import NavalBattleGame.GameElements.GameEnums.ShipOrientation;
 
 import java.util.*;
 

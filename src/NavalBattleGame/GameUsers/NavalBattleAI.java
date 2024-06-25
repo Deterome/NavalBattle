@@ -3,7 +3,7 @@ package NavalBattleGame.GameUsers;
 import NavalBattleGame.GameElements.SeaCellInfo;
 import NavalBattleGame.GameElements.SeaField;
 import NavalBattleGame.GameElements.Ship;
-import NavalBattleGame.GameEnums.ShipOrientation;
+import NavalBattleGame.GameElements.GameEnums.ShipOrientation;
 
 import java.util.*;
 

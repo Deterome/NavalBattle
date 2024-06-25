@@ -1,12 +1,11 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates;
 
-import NavalBattleGame.GameEnums.GameEvent;
+import NavalBattleGame.GameElements.GameEnums.GameEvent;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.InputListener;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleButton;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleTextBlock;
-import NavalBattleGameViewer.UI.UIevents;
 
 enum MainMenuElements {
     Title,
@@ -32,7 +31,7 @@ public class ConsoleMainMenu extends ConsoleCanvas<MainMenuElements> implements 
 
         var startButton = new ConsoleButton("Start new round [start]", 10,1);
         startButton.addListener(() -> {
-            navalBattle.processEvent(GameEvent.RoundCreated);
+            navalBattle.invokeEvent(GameEvent.RoundCreated);
         });
         startButton.setPosition(50, 15);
         UIElementsMap.put(MainMenuElements.StartButton, startButton);
@@ -40,7 +39,7 @@ public class ConsoleMainMenu extends ConsoleCanvas<MainMenuElements> implements 
 
         var joinButton = new ConsoleButton("Join to round [join]", 10,1);
         joinButton.addListener(() -> {
-            navalBattle.processEvent(GameEvent.JoinMenuOpened);
+            navalBattle.invokeEvent(GameEvent.JoinMenuOpened);
         });
         joinButton.setPosition(50, 16);
         UIElementsMap.put(MainMenuElements.JoinButton, joinButton);
@@ -48,7 +47,7 @@ public class ConsoleMainMenu extends ConsoleCanvas<MainMenuElements> implements 
 
         var exitButton = new ConsoleButton("Exit [exit]", 10,1);
         exitButton.addListener(() -> {
-            navalBattle.processEvent(GameEvent.GameExited);
+            navalBattle.invokeEvent(GameEvent.GameExited);
         });
         exitButton.setPosition(50, 17);
         UIElementsMap.put(MainMenuElements.ExitButton, exitButton);

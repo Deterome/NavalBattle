@@ -13,17 +13,13 @@ import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import ws.WebSocketInspector;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
 import java.util.HashMap;
 
 public class RoundServer extends WebSocketServer {
 
-    public RoundServer(Round round) {
-        super( new InetSocketAddress(WebSocketInspector.findHost(), WebSocketInspector.findFreePortOnHost("localhost",8000, 8500)));
+    public RoundServer(Round round, String host, int port) {
+        super(new InetSocketAddress(host, port));
 
         this.round = round;
     }
@@ -79,12 +75,8 @@ public class RoundServer extends WebSocketServer {
         ObjectNode jsonPackage = objectMapper.createObjectNode();
         jsonPackage.put("command", CommandToClient.PrecessPlayerMove.getStringOfCommand());
         jsonPackage.put("object", movementInfo);
-        for (var clientsEntry: clients.entrySet()) {
-            if (!round.findPlayerByUser(clientsEntry.getValue()).getNickname()
-                    .equals(player.getNickname())) {
-                clientsEntry.getKey().send(objectMapper.writeValueAsString(jsonPackage));
-            }
-        }
+
+        sendJsonPackageOfPlayerToClients(player, objectMapper.writeValueAsString(jsonPackage));
     }
 
     public void processClientMovement(String movementInfo) throws JsonProcessingException {
@@ -117,9 +109,17 @@ public class RoundServer extends WebSocketServer {
         jsonPackage.put("command", CommandToClient.UpdatePlayerInformation.getStringOfCommand());
         jsonPackage.put("object", JsonParser.createJsonStringFromPlayer(player));
 
+        sendJsonPackageOfPlayerToClients(player, objectMapper.writeValueAsString(jsonPackage));
+    }
+
+    private void sendJsonPackageOfPlayerToClients(Player player, String jsonPackageStr) {
+
         for (var clientsEntry: clients.entrySet()) {
-            if (!round.findPlayerByUser(clientsEntry.getValue()).getNickname().equals(player.getNickname())) {
-                clientsEntry.getKey().send(objectMapper.writeValueAsString(jsonPackage));
+            if (round.findPlayerByUser(clientsEntry.getValue()) == null ||
+                    !round.findPlayerByUser(clientsEntry.getValue()).getNickname().equals(player.getNickname())) {
+                if (clientsEntry.getKey().isOpen()) {
+                    clientsEntry.getKey().send(jsonPackageStr);
+                }
             }
         }
     }

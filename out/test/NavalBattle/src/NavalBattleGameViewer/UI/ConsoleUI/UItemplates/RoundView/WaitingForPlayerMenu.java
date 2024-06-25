@@ -35,7 +35,7 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
 
         var closeRoundButton = new ConsoleButton("Close round [close]", 10,1);
         closeRoundButton.addListener(() -> {
-            game.getCurrentRound().processEvent(RoundEvents.MatchEnd);
+            game.getCurrentRound().invokeEvent(RoundEvents.MatchEnd);
         });
         closeRoundButton.setPosition(0, 0);
         UIElementsMap.put(WaitingForPlayerMenuElements.CloseRound, closeRoundButton);
@@ -132,7 +132,7 @@ public class WaitingForPlayerMenu extends ConsoleCanvas<WaitingForPlayerMenuElem
                                 game.getCurrentRound().closeLAN();
                             }
                         }
-                        case "play" -> game.getCurrentRound().processEvent(RoundEvents.StopWaitingForPlayers);
+                        case "play" -> game.getCurrentRound().invokeEvent(RoundEvents.StopWaitingForPlayers);
                     }
                 }
             }

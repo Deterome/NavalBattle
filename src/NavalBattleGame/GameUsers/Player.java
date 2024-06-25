@@ -1,6 +1,6 @@
 package NavalBattleGame.GameUsers;
 
-import NavalBattleGame.GameElements.AttackResult;
+import NavalBattleGame.GameElements.GameEnums.AttackResult;
 import NavalBattleGame.GameElements.SeaField;
 import NavalBattleGame.GameElements.Ship;
 

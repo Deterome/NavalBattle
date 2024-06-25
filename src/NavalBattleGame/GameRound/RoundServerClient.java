@@ -1,6 +1,6 @@
 package NavalBattleGame.GameRound;
 
-import NavalBattleGame.GameEnums.GameEvent;
+import NavalBattleGame.GameElements.GameEnums.GameEvent;
 import NavalBattleGame.GameUsers.PlayerAction;
 import NavalBattleGame.GameUsers.User;
 import NavalBattleGame.NavalBattleGame;
@@ -15,6 +15,7 @@ import org.java_websocket.handshake.ServerHandshake;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 
 public class RoundServerClient extends WebSocketClient {
 
@@ -58,10 +59,10 @@ public class RoundServerClient extends WebSocketClient {
                     processSettingUserList(jsonNode.path("object").asText());
                 }
                 case StopWaitingForPlayers -> {
-                    this.game.getCurrentRound().processEvent(RoundEvents.StopWaitingForPlayers);
+                    this.game.getCurrentRound().invokeEvent(RoundEvents.StopWaitingForPlayers);
                 }
                 case StartMatch -> {
-                    this.game.getCurrentRound().processEvent(RoundEvents.StartMatch);
+                    this.game.getCurrentRound().invokeEvent(RoundEvents.StartMatch);
                 }
                 case SendPlayerInformationToServer -> {
                     sendPlayerInformationToServer();
@@ -92,13 +93,16 @@ public class RoundServerClient extends WebSocketClient {
     }
 
     private void sendPlayerInformationToServer() throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
+        var playerOptional = Optional.ofNullable(game.getCurrentRound().findPlayerByUser(game.getUser()));
+        if (playerOptional.isPresent()) {
+            ObjectMapper objectMapper = new ObjectMapper();
 
-        ObjectNode jsonPackage = objectMapper.createObjectNode();
-        jsonPackage.put("command", CommandToServer.UpdatePlayerInformation.getStringOfCommand());
-        jsonPackage.put("object", JsonParser.createJsonStringFromPlayer(game.getCurrentRound().findPlayerByUser(game.getUser())));
+            ObjectNode jsonPackage = objectMapper.createObjectNode();
+            jsonPackage.put("command", CommandToServer.UpdatePlayerInformation.getStringOfCommand());
+            jsonPackage.put("object", JsonParser.createJsonStringFromPlayer(playerOptional.get()));
 
-        send(objectMapper.writeValueAsString(jsonPackage));
+            send(objectMapper.writeValueAsString(jsonPackage));
+        }
     }
 
     private void updatePlayerInformation(String playerJsonStr) throws JsonProcessingException {
@@ -124,13 +128,15 @@ public class RoundServerClient extends WebSocketClient {
     }
 
     public void notifyServerOfReadiness() {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        ObjectNode jsonPackage = objectMapper.createObjectNode();
-        jsonPackage.put("command", CommandToServer.PlayerIsReady.getStringOfCommand());
-        jsonPackage.put("object", game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname());
-
         try {
+            sendPlayerInformationToServer();
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            ObjectNode jsonPackage = objectMapper.createObjectNode();
+            jsonPackage.put("command", CommandToServer.PlayerIsReady.getStringOfCommand());
+            jsonPackage.put("object", game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname());
+
             send(objectMapper.writeValueAsString(jsonPackage));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -156,7 +162,7 @@ public class RoundServerClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        game.processEvent(GameEvent.RoundEnded);
+        game.invokeEvent(GameEvent.RoundEnded);
     }
 
     @Override

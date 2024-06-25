@@ -33,7 +33,7 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
         aiHelpButton.addListener(() -> {
             var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
 
-            var coordinates = NavalBattleAI.analyseFieldAndGetAttackCoords(game.getCurrentRound().getNextPlayerToAct().getField());
+            var coordinates = NavalBattleAI.analyseFieldAndGetAttackCoords(game.getCurrentRound().findNextPlayerToAct().getField());
             game.getCurrentRound().makeAction(player, PlayerAction.Attack, coordinates.getKey(), coordinates.getValue());
         });
         aiHelpButton.setPosition(90, 0);
@@ -43,23 +43,25 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
 
     @Override
     public void onInput(String enteredText) {
-        switch (enteredText) {
-            case "help" -> pressButton(MatchMenuElements.AIHelpButton);
-            default -> {
-                var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
+        if (game.getCurrentRound().findPlayerByUser(game.getUser()) != null) {
+            switch (enteredText) {
+                case "help" -> pressButton(MatchMenuElements.AIHelpButton);
+                default -> {
+                    var player =  game.getCurrentRound().findPlayerByUser(game.getUser());
 
-                try {
-                    Optional<String> coordinatesJsonStr = Optional.ofNullable(JsonParser.createJsonStringFromCoordinatesString(enteredText));
-                    coordinatesJsonStr.ifPresent(coordsJsonStr -> {
-                        try {
-                            var coordinates = JsonParser.makeCoordinatesFromJsonString(coordsJsonStr);
-                            game.getCurrentRound().makeAction(player, PlayerAction.Attack, coordinates.getKey(), coordinates.getValue());
-                        } catch (JsonProcessingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                    try {
+                        Optional<String> coordinatesJsonStr = Optional.ofNullable(JsonParser.createJsonStringFromCoordinatesString(enteredText));
+                        coordinatesJsonStr.ifPresent(coordsJsonStr -> {
+                            try {
+                                var coordinates = JsonParser.makeCoordinatesFromJsonString(coordsJsonStr);
+                                game.getCurrentRound().makeAction(player, PlayerAction.Attack, coordinates.getKey(), coordinates.getValue());
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
@@ -83,12 +85,16 @@ public class ConsoleMatchMenu extends ConsoleCanvas<MatchMenuElements> implement
         int printXOffset = 45;
         for (var player: players) {
             String playerActing = "";
-            if (game.getCurrentRound().getActingPlayer() == player) {
+            if (game.getCurrentRound().findActingPlayer() == player) {
                 playerActing += "acting-> ";
             }
             printConstructor.putTextInPosition(playerActing + player.getNickname(), printXPos + 15 - playerActing.length(), 2);
-            printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField(), game.getCurrentRound().findPlayerByUser(game.getUser()) != player), printXPos, 3);
-//            printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField()), printXPos, 3);
+            if (game.getCurrentRound().findPlayerByUser(game.getUser()) != null) {
+                printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField(), game.getCurrentRound().findPlayerByUser(game.getUser()) != player), printXPos, 3);
+
+            } else {
+                printConstructor.putTextInPosition(FieldPrinter.getFieldPrint(player.getField()), printXPos, 3);
+            }
             printConstructor.putTextInPosition("Remaining ships in field: " + player.countRemainingShips(),printXPos + 5, 22);
             printXPos += printXOffset;
         }

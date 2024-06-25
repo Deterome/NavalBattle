@@ -30,8 +30,8 @@ public abstract class ConsoleCanvas<E extends Enum<E>> extends Canvas<E> impleme
 
     protected void pressButton(E button) {
         setFocus(button);
-        UIElementsMap.get(focusedElement).processEvent(UIevents.Pressed);
-        UIElementsMap.get(focusedElement).processEvent(UIevents.Released);
+        UIElementsMap.get(focusedElement).invokeEvent(UIevents.Pressed);
+        UIElementsMap.get(focusedElement).invokeEvent(UIevents.Released);
         clearFocus();
     }
 }

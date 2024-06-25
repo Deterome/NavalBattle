@@ -26,7 +26,7 @@ public class Bot extends Player {
 
     public void attack() {
         var player = this;
-        var attackCoords = NavalBattleAI.analyseFieldAndGetAttackCoords(round.getNextPlayerToAct().getField());
+        var attackCoords = NavalBattleAI.analyseFieldAndGetAttackCoords(round.findNextPlayerToAct().getField());
         scheduledExecutorService.schedule(new Runnable() {
             @Override
             public void run() {

@@ -1,10 +1,9 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates;
 
-import NavalBattleGame.GameEnums.GameEvent;
+import NavalBattleGame.GameElements.GameEnums.GameEvent;
 import NavalBattleGame.GameUsers.User;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.InputListener;
-import NavalBattleGameViewer.UI.Canvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleTextBlock;
 
@@ -34,7 +33,7 @@ public class ConsolePlayerSetupMenu extends ConsoleCanvas<PlayerSetupMenuElement
     public void onInput(String enteredText) {
         if (!enteredText.isEmpty()) {
             game.setUser(new User(enteredText));
-            game.processEvent(GameEvent.PlayerNameEntered);
+            game.invokeEvent(GameEvent.PlayerNameEntered);
         }
     }
 

@@ -1,12 +1,11 @@
 package NavalBattleGameViewer.UI.ConsoleUI.UItemplates;
 
-import NavalBattleGame.GameEnums.GameEvent;
+import NavalBattleGame.GameElements.GameEnums.GameEvent;
 import NavalBattleGame.NavalBattleGame;
 import NavalBattleGameViewer.InputListener;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleCanvas;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleButton;
 import NavalBattleGameViewer.UI.ConsoleUI.ConsoleUIElements.ConsoleTextBlock;
-import NavalBattleGameViewer.UI.UIevents;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,7 +32,7 @@ public class ConsoleJoinMenu extends ConsoleCanvas<JoinMenuElements> implements 
 
         var backToMenuButton = new ConsoleButton("Back to menu [back]", 10,1);
         backToMenuButton.addListener(() -> {
-            game.processEvent(GameEvent.BackToMenu);
+            game.invokeEvent(GameEvent.BackToMenu);
         });
         backToMenuButton.setPosition(45, 15);
         UIElementsMap.put(JoinMenuElements.BackToMenuButton, backToMenuButton);
@@ -49,10 +48,10 @@ public class ConsoleJoinMenu extends ConsoleCanvas<JoinMenuElements> implements 
             String[] address = enteredText.split(":");
             if (address.length > 1 && isValidAddress(enteredText)) {
                 game.joinToRound(address[0], Integer.parseInt(address[1]));
-                game.processEvent(GameEvent.ConnectedToRound);
+                game.invokeEvent(GameEvent.ConnectedToRound);
             } else if (isNumeric(address[0])){
                 game.joinToRound(Integer.parseInt(enteredText));
-                game.processEvent(GameEvent.ConnectedToRound);
+                game.invokeEvent(GameEvent.ConnectedToRound);
             }
         }
     }
