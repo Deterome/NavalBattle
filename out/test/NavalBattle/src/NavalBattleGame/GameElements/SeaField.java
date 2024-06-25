@@ -30,6 +30,21 @@ public class SeaField {
         return seaTable;
     }
 
+    public List<Map.Entry<Integer, Character>> makeListOfNotShelledCells() {
+        List<Map.Entry<Integer, Character>> listOfNotShelledCells = new ArrayList<>();
+
+        for (var rowEntry: seaTable.entrySet()) {
+            for (var colEntry: seaTable.get(rowEntry.getKey()).entrySet()) {
+                if (!colEntry.getValue().isShelled()) listOfNotShelledCells.add(new AbstractMap.SimpleEntry<>(
+                        rowEntry.getKey(),
+                        colEntry.getKey()
+                ));
+            }
+        }
+
+        return listOfNotShelledCells;
+    }
+
     public boolean tryPlaceShipInCells(Ship ship, ShipOrientation shipOrientation, int row, char col) {
         int colStep = 0, rowStep = 0;
         switch (shipOrientation) {

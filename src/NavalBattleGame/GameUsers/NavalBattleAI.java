@@ -48,9 +48,9 @@ public class NavalBattleAI {
     static public Map.Entry<Integer, Character> analyseFieldAndGetAttackCoords(SeaField field) {
         var hitedShipCoords = findCoordsOfHitedShipInField(field);
         if (hitedShipCoords == null) {
-            return getRandomNotShelledCellInField(field);
+            return findCellInWichCanBeLocatedShip(field);
         }
-        return getCoordsToAttackHitedShipAtCoords(field, hitedShipCoords);
+        return findCoordsToAttackHitedShipAtCoords(field, hitedShipCoords);
     }
 
     static private Map.Entry<Integer, Character> findCoordsOfHitedShipInField(SeaField field) {
@@ -69,11 +69,18 @@ public class NavalBattleAI {
         return null;
     }
 
-    static private Map.Entry<Integer, Character> getCoordsToAttackHitedShipAtCoords(SeaField field, Map.Entry<Integer, Character> hitedShipCoords) {
+    static private Map.Entry<Integer, Character> findCoordsToAttackHitedShipAtCoords(SeaField field, Map.Entry<Integer, Character> hitedShipCoords) {
         HashMap<CheckDirection, int[][]> moveDirections = new HashMap<>();
         int[][] horizontalDirections = {{1, 0},{-1,0}};
         moveDirections.put(CheckDirection.Horizontal, horizontalDirections);
         int[][] verticalDirections = {{0, 1},{0, -1}};
+
+        int[] stepsVariants = {1, -1};
+        ArrayList<Integer> randomStepsVariantsList = new ArrayList<>();
+        int randomIdOfStep = random.nextInt(stepsVariants.length);
+        randomStepsVariantsList.add(stepsVariants[randomIdOfStep]);
+        randomStepsVariantsList.add(stepsVariants[1 - randomIdOfStep]);
+
         moveDirections.put(CheckDirection.Vertical, verticalDirections);
         var seaTable = field.getSeaTable();
         // ищем соседние задетые части
@@ -85,12 +92,12 @@ public class NavalBattleAI {
                     // теперь мы точно знаем расположение корабля и возвращаем координаты по нужной оси
                     switch (moveDirectionEntry.getKey()) {
                         case Horizontal -> {
-                            for (var horizontalMoveDirection: horizontalDirections) {
-                                char currCol = (char)(hitedShipCoords.getValue() + horizontalMoveDirection[0]);
+                            for (var horizontalMoveDirection: randomStepsVariantsList) {
+                                char currCol = (char)(hitedShipCoords.getValue() + horizontalMoveDirection);
                                 while (seaTable.get(hitedShipCoords.getKey()).get(currCol) != null &&
                                         seaTable.get(hitedShipCoords.getKey()).get(currCol).isShelled() &&
                                         seaTable.get(hitedShipCoords.getKey()).get(currCol).hasShip()) {
-                                    currCol = (char)(currCol + horizontalMoveDirection[0]);
+                                    currCol = (char)(currCol + horizontalMoveDirection);
                                 }
                                 if (seaTable.get(hitedShipCoords.getKey()).get(currCol) != null &&
                                         !seaTable.get(hitedShipCoords.getKey()).get(currCol).isShelled()) {
@@ -99,12 +106,12 @@ public class NavalBattleAI {
                             }
                         }
                         case Vertical -> {
-                            for (var verticalMoveDirection: verticalDirections) {
-                                var currRow = hitedShipCoords.getKey()+ verticalMoveDirection[1];
+                            for (var verticalMoveDirection: randomStepsVariantsList) {
+                                var currRow = hitedShipCoords.getKey()+ verticalMoveDirection;
                                 while (seaTable.get(currRow) != null &&
                                         seaTable.get(currRow).get(hitedShipCoords.getValue()).isShelled() &&
                                         seaTable.get(currRow).get(hitedShipCoords.getValue()).hasShip()) {
-                                    currRow += verticalMoveDirection[1];
+                                    currRow += verticalMoveDirection;
                                 }
                                 if (seaTable.get(currRow) != null &&
                                         !seaTable.get(currRow).get(hitedShipCoords.getValue()).isShelled()) {
@@ -126,24 +133,76 @@ public class NavalBattleAI {
                 }
             }
         }
-        // если AI сойдёт с ума, вернём рандомную координату
-        return getRandomNotShelledCellInField(field);
+
+        return findCellInWichCanBeLocatedShip(field);
     }
 
-    static private Map.Entry<Integer, Character> getRandomNotShelledCellInField(SeaField field) {
+    static private Map.Entry<Integer, Character> findCellInWichCanBeLocatedShip(SeaField field) {
         if (field == null) return null;
+
+        var listOfNotShelledCells = field.makeListOfNotShelledCells();
+        var countOfShipsWithSameSize = makeMapOfCountOfShipsWithSameSize(field.makeShipsListFromField());
+        while (!listOfNotShelledCells.isEmpty()) {
+            var notShelledCell = listOfNotShelledCells.get(random.nextInt(listOfNotShelledCells.size()));
+            listOfNotShelledCells.remove(notShelledCell);
+            for (var shipSize: countOfShipsWithSameSize.keySet()) {
+                if (checkIfShipWithSizeCanBeInCell(field, notShelledCell.getKey(), notShelledCell.getValue(), shipSize)) {
+                    return notShelledCell;
+                }
+            }
+        }
+        return findRandomNotShelledCellInField(field);
+    }
+
+    static private Map.Entry<Integer, Character> findRandomNotShelledCellInField(SeaField field) {
+        if (field == null) return null;
+
+        var listOfNotShelledCells = field.makeListOfNotShelledCells();
+
+        return listOfNotShelledCells.get(random.nextInt(listOfNotShelledCells.size()));
+    }
+
+    static private boolean checkIfShipWithSizeCanBeInCell (SeaField field, int row, char col, int sizeOfShip) {
+        if (field == null) return false;
         var seaTable = field.getSeaTable();
 
-        ArrayList<Integer> rows = field.makeRowsKeysList();
-        ArrayList<Character> cols = field.makeColsKeysList();
-        int row;
-        char col;
-        do {
-            row = rows.get(random.nextInt(rows.size()));
-            col = cols.get(random.nextInt(cols.size()));
-        } while (seaTable.get(row).get(col).isShelled());
+        int[] steps = {1, -1};
+        for (var direction: CheckDirection.values()) {
+            int remainingCells = sizeOfShip-1;
+            for (var step: steps) {
+                int currentRow = row;
+                char currentCol = col;
+                while (seaTable.get(currentRow) != null &&
+                        seaTable.get(currentRow).get(currentCol) != null &&
+                        !seaTable.get(currentRow).get(currentCol).isShelled()
+                ) {
+                    if (currentRow != row && currentCol != col) {
+                        remainingCells--;
+                        if (remainingCells == 0) return true;
+                    }
 
-        return new AbstractMap.SimpleEntry<>(row, col);
+                    switch (direction) {
+                        case Horizontal -> currentCol = (char)(currentCol + step);
+                        case Vertical -> currentRow = currentRow + step;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    static private HashMap<Integer, Integer> makeMapOfCountOfShipsWithSameSize(ArrayList<Ship> shipsList) {
+        HashMap<Integer, Integer> countOfShipsWithSameSize = new HashMap<>();
+
+        for (var ship: shipsList) {
+            var shipSize = ship.countShipSize();
+            if (!countOfShipsWithSameSize.containsKey(shipSize)) {
+                countOfShipsWithSameSize.put(shipSize, 0);
+            }
+            countOfShipsWithSameSize.put(shipSize, countOfShipsWithSameSize.get(shipSize) + 1);
+        }
+
+        return countOfShipsWithSameSize;
     }
 
 
