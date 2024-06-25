@@ -85,6 +85,6 @@ public class FieldPrinter {
     private static final char SECOND_WAVE_SYMBOL = '-';
     private static final char SHIP_PART_SYMBOL = '#';
     private static final char DESTROYED_SHIP_PART_SYMBOL = '/';
-    private static final char DESTROYED_SHIP_SYMBOL = 'X';
-    private static final char SHELLED_CELL_SYMBOL = 'u';
+    private static final char DESTROYED_SHIP_SYMBOL = '*';
+    private static final char SHELLED_CELL_SYMBOL = '.';
 }
