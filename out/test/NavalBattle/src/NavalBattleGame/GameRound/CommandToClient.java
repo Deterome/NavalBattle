@@ -6,8 +6,9 @@ public enum CommandToClient {
     StartMatch ("StartMatch"),
     SendPlayerInformationToServer ("SendPlayerInformationToServer"),
     UpdatePlayerInformation("UpdatePlayerInformation"),
-    PrecessPlayerMove("PrecessPlayerMove");
-
+    ProcessPlayerMove("ProcessPlayerMove"),
+    AddRoleToUser ("AddRoleToUser"),
+    DeleteUserRole ("DeleteUserRole");
 
     CommandToClient(String commandString) {
         this.commandString = commandString;

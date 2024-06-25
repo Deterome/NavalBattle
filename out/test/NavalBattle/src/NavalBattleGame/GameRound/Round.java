@@ -71,10 +71,10 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     boolean tryAddPlayer(User user) {
         if (countOfUsersWithRole(UserRole.Player) < maxCountOfPlayers) {
             var userRoles = joinedUsers.get(user);
+            userRoles.add(UserRole.Player);
             if (userRoles.contains(UserRole.Watcher)) {
                 deleteUserRole(user, UserRole.Watcher);
             }
-            userRoles.add(UserRole.Player);
             return true;
         } else {
             return false;
@@ -93,7 +93,8 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
                 }
             }
             if (game.getCurrentRound().findPlayerByUser(game.getUser()) != null &&
-                    player.getNickname().equals(game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname())
+                    (player.getNickname().equals(game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname()) ||
+                    player instanceof Bot)
             ) {
                 if (isLanOpened()) {
                     try {
@@ -204,12 +205,24 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     }
 
     public void deleteUserRole(User user, UserRole roleToDelete) {
-        var userRoles = joinedUsers.get(user);
+        deleteUserRole(user, roleToDelete, true);
+    }
+
+    public void deleteUserRole(User user, UserRole roleToDelete, boolean notifyServer) {
+        var currentUser = findUserByName(user.getName());
+        var userRoles = joinedUsers.get(currentUser);
 
         userRoles.remove(roleToDelete);
 
         if (userRoles.isEmpty()) {
-            tryAddWatcher(user);
+            tryAddWatcher(currentUser);
+        }
+        if (notifyServer) {
+            if (isLanOpened()) {
+                roundServer.notifyClientsToDeleteUserRole(game.getUser(), currentUser, roleToDelete);
+            } else if (game.isConnectedToRoundServer()) {
+                game.getConnectionToRound().notifyServerToDeleteUserRole(currentUser, roleToDelete);
+            }
         }
     }
 
@@ -256,11 +269,24 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     }
 
     public void giveUserRole(User user, UserRole newRole) {
-        if (!joinedUsers.get(user).contains(newRole)) {
+        giveUserRole(user, newRole, true);
+    }
+
+    public void giveUserRole(User user, UserRole newRole, boolean notifyServer) {
+        var currentUser = findUserByName(user.getName());
+        if (!joinedUsers.get(currentUser).contains(newRole)) {
+            boolean roleAdded = false;
             switch (newRole){
-                case Admin -> tryAddAdmin(user);
-                case Player -> tryAddPlayer(user);
-                case Watcher -> tryAddWatcher(user);
+                case Admin -> roleAdded = tryAddAdmin(currentUser);
+                case Player -> roleAdded = tryAddPlayer(currentUser);
+                case Watcher -> roleAdded = tryAddWatcher(currentUser);
+            }
+            if (notifyServer && roleAdded) {
+                if (isLanOpened()) {
+                    roundServer.notifyClientsToAddRoleToUser(game.getUser(), currentUser, newRole);
+                } else if (game.isConnectedToRoundServer()) {
+                    game.getConnectionToRound().notifyServerToAddRoleToUser(currentUser, newRole);
+                }
             }
         }
     }
@@ -313,6 +339,13 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     public boolean isPlayerActing(Player player) {
         if (player == null) return false;
         return (Player)players.values().toArray()[actingPlayerId] == player;
+    }
+
+    public User findUserByName(String userName) {
+        for (var user: joinedUsers.keySet()) {
+            if (user.getName().equals(userName)) return user;
+        }
+        return null;
     }
 
     HashMap<User, ArrayList<UserRole>> joinedUsers =new HashMap<>();

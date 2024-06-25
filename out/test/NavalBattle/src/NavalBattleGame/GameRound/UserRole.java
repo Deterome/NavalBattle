@@ -9,7 +9,7 @@ public enum UserRole {
         this.userRoleString = userRoleStr;
     }
 
-    static UserRole getCommandByString(String userRoleStr) {
+    public static UserRole getUserRoleByString(String userRoleStr) {
         for (var userRole: UserRole.values()) {
             if (userRole.userRoleString.equals(userRoleStr)) {
                 return userRole;

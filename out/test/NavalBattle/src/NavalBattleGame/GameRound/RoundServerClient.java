@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.java_websocket.WebSocket;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -70,13 +71,31 @@ public class RoundServerClient extends WebSocketClient {
                 case UpdatePlayerInformation -> {
                     updatePlayerInformation(jsonNode.path("object").asText());
                 }
-                case PrecessPlayerMove -> {
+                case ProcessPlayerMove -> {
                     processPlayerMovement(jsonNode.path("object").asText());
+                }
+                case AddRoleToUser -> {
+                    processAddingRoleToUser(jsonNode.path("object").asText());
+                }
+                case DeleteUserRole -> {
+                    processDeletingUserRole(jsonNode.path("object").asText());
                 }
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void processAddingRoleToUser(String jsonPackage) throws JsonProcessingException {
+        var userWithRoleToAdd = JsonParser.makeUserNameAndRoleEntryFromJsonString(jsonPackage);
+        var user = game.getCurrentRound().findUserByName(userWithRoleToAdd.getKey());
+        game.getCurrentRound().giveUserRole(user, userWithRoleToAdd.getValue(), false);
+    }
+
+    private void processDeletingUserRole(String jsonPackage) throws JsonProcessingException {
+        var userWithRoleToDelete = JsonParser.makeUserNameAndRoleEntryFromJsonString(jsonPackage);
+        var user = game.getCurrentRound().findUserByName(userWithRoleToDelete.getKey());
+        game.getCurrentRound().deleteUserRole(user, userWithRoleToDelete.getValue(), false);
     }
 
     private void processPlayerMovement(String movementInfo) throws JsonProcessingException {
@@ -95,13 +114,36 @@ public class RoundServerClient extends WebSocketClient {
     private void sendPlayerInformationToServer() throws JsonProcessingException {
         var playerOptional = Optional.ofNullable(game.getCurrentRound().findPlayerByUser(game.getUser()));
         if (playerOptional.isPresent()) {
-            ObjectMapper objectMapper = new ObjectMapper();
+            send(
+                    JsonParser.createJsonPackageForServer(CommandToServer.UpdatePlayerInformation,
+                            JsonParser.createJsonStringFromPlayer(playerOptional.get()))
+            );
+        }
+    }
 
-            ObjectNode jsonPackage = objectMapper.createObjectNode();
-            jsonPackage.put("command", CommandToServer.UpdatePlayerInformation.getStringOfCommand());
-            jsonPackage.put("object", JsonParser.createJsonStringFromPlayer(playerOptional.get()));
+    public void notifyServerToAddRoleToUser(User user, UserRole userRole) {
+        try {
+            send(
+                    JsonParser.createJsonPackageForServer(
+                            CommandToServer.AddRoleToUser,
+                            JsonParser.createJsonStringOfUserWithRole(user.getName(), userRole)
+                    )
+            );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-            send(objectMapper.writeValueAsString(jsonPackage));
+    public void notifyServerToDeleteUserRole(User user, UserRole userRole) {
+        try {
+            send(
+                    JsonParser.createJsonPackageForServer(
+                            CommandToServer.DeleteUserRole,
+                            JsonParser.createJsonStringOfUserWithRole(user.getName(), userRole)
+                    )
+            );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -110,18 +152,15 @@ public class RoundServerClient extends WebSocketClient {
     }
 
     public void sendMoveInformationToServer(PlayerAction action, int moveRow, char moveCol) {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        ObjectNode jsonPackage = objectMapper.createObjectNode();
-        jsonPackage.put("command", CommandToServer.ProcessMove.getStringOfCommand());
         try {
-            jsonPackage.put("object", JsonParser.createJsonStringFromMovementInfo(
-                    game.getCurrentRound().findPlayerByUser(game.getUser()),
-                    action,
-                    moveRow,
-                    moveCol
-            ));
-            send(objectMapper.writeValueAsString(jsonPackage));
+            send(
+                    JsonParser.createJsonPackageForServer(CommandToServer.ProcessMove, JsonParser.createJsonStringFromMovementInfo(
+                            game.getCurrentRound().findPlayerByUser(game.getUser()),
+                            action,
+                            moveRow,
+                            moveCol
+                    ))
+            );
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -131,13 +170,10 @@ public class RoundServerClient extends WebSocketClient {
         try {
             sendPlayerInformationToServer();
 
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            ObjectNode jsonPackage = objectMapper.createObjectNode();
-            jsonPackage.put("command", CommandToServer.PlayerIsReady.getStringOfCommand());
-            jsonPackage.put("object", game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname());
-
-            send(objectMapper.writeValueAsString(jsonPackage));
+            send(
+                    JsonParser.createJsonPackageForServer(CommandToServer.PlayerIsReady,
+                            game.getCurrentRound().findPlayerByUser(game.getUser()).getNickname())
+            );
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -152,7 +188,7 @@ public class RoundServerClient extends WebSocketClient {
             ArrayList<UserRole> roles = new ArrayList<>();
             ArrayList<String> rolesStrings =  objectMapper.readValue(entry.getValue(), ArrayList.class);
             for (var role: rolesStrings) {
-                roles.add(UserRole.getCommandByString(role));
+                roles.add(UserRole.getUserRoleByString(role));
             }
             usersMap.put(user, roles);
         }

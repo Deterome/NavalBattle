@@ -3,6 +3,9 @@ package NavalBattleGame.ToolsForGame;
 import NavalBattleGame.GameElements.Part;
 import NavalBattleGame.GameElements.SeaField;
 import NavalBattleGame.GameElements.Ship;
+import NavalBattleGame.GameRound.CommandToClient;
+import NavalBattleGame.GameRound.CommandToServer;
+import NavalBattleGame.GameRound.UserRole;
 import NavalBattleGame.GameUsers.Player;
 import NavalBattleGame.GameUsers.PlayerAction;
 import NavalBattleGame.GameUsers.User;
@@ -125,6 +128,37 @@ public class JsonParser {
                 }
             }
         }
+    }
+
+    static public Map.Entry<String, UserRole> makeUserNameAndRoleEntryFromJsonString(String jsonStr) throws JsonProcessingException {
+        JsonNode jsonNode = objectMapper.readTree(jsonStr);
+        var userName = jsonNode.path("user_name").asText();
+        var userRole = UserRole.getUserRoleByString(jsonNode.path("user_role").asText());
+
+        return new AbstractMap.SimpleEntry<>(userName, userRole);
+    }
+
+    static public String createJsonStringOfUserWithRole(String userName, UserRole userRole) throws JsonProcessingException {
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("user_name", userName);
+        jsonPackage.put("user_role", userRole.getStringOfUserRole());
+
+        return objectMapper.writeValueAsString(jsonPackage);
+    }
+
+    static public String createJsonPackageForServer(CommandToServer commandToServer, String packageBody) throws JsonProcessingException {
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", commandToServer.getStringOfCommand());
+        jsonPackage.put("object", packageBody);
+
+        return objectMapper.writeValueAsString(jsonPackage);
+    }
+    static public String createJsonPackageForClient(CommandToClient commandToClient, String packageBody) throws JsonProcessingException {
+        ObjectNode jsonPackage = objectMapper.createObjectNode();
+        jsonPackage.put("command", commandToClient.getStringOfCommand());
+        jsonPackage.put("object", packageBody);
+
+        return objectMapper.writeValueAsString(jsonPackage);
     }
 
     static ObjectMapper objectMapper = new ObjectMapper();
