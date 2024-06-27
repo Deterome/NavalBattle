@@ -387,8 +387,9 @@ public class Round extends StateMachine<RoundStates, RoundEvents> {
     protected void onStateChange(RoundStates newState) {
         switch (newState) {
             case MatchEnded -> {
-                closeLAN();
                 game.invokeEvent(GameEvent.RoundEnded);
+                closeLAN();
+                this.stopStateMachine();
             }
             case PlacementOfShips -> {
                 if (roundServer != null) {

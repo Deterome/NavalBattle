@@ -178,8 +178,8 @@ public class NavalBattleAI {
                 ) {
                     if (currentRow != row && currentCol != col) {
                         remainingCells--;
-                        if (remainingCells == 0) return true;
                     }
+                    if (remainingCells == 0) return true;
 
                     switch (direction) {
                         case Horizontal -> currentCol = (char)(currentCol + step);
